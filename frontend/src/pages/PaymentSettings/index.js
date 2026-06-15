@@ -19,6 +19,7 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import { makeStyles } from "@material-ui/core/styles";
 import { toast } from "react-toastify";
 import { useSystemAlert } from "../../components/SystemAlert";
+import api from "../../services/api";
 
 import {
   deleteCompanyPaymentSetting,
