@@ -218,34 +218,17 @@ const PaymentSettings = () => {
   };
 
   const handleTestConnection = async item => {
-    if (item.provider !== "asaas") {
-      toast.info("Teste de conexão disponível apenas para Asaas por enquanto.");
-      return;
-    }
-
     setTestingConnection(true);
     try {
-      const response = await fetch("https://api.asaas.com/v3/account", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          access_token: item.token
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(`✓ Conexão bem-sucedida! Conta: ${data.name || "Asaas"}`);
-      } else if (response.status === 401) {
-        toast.error("✗ Token inválido ou expirado.");
-      } else if (response.status === 429) {
-        toast.error("✗ Muitas requisições. Tente novamente em alguns segundos.");
+      const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
+      if (data.success) {
+        toast.success(`✓ ${data.message}`);
       } else {
-        toast.error("✗ Erro ao conectar ao Asaas. Verifique o token.");
+        toast.error(`✗ ${data.message}`);
       }
     } catch (error) {
-      toast.error("✗ Erro de conexão. Verifique sua internet.");
-      console.error("Connection test error:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao testar conexão";
+      toast.error(`✗ ${errorMessage}`);
     } finally {
       setTestingConnection(false);
     }

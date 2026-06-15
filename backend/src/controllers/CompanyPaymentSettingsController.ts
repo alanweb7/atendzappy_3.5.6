@@ -107,7 +107,6 @@ export const testConnection = async (req: Request, res: Response): Promise<Respo
 
   throw new AppError("Gateway não suportado.", 400);
 };
-
 export const generatePaymentLink = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const { provider } = req.params;
