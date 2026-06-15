@@ -1055,6 +1055,7 @@ const LoggedInLayout = ({ children }) => {
         children: [
           { title: "Canais", path: "/canais" },
           { title: "Departamentos", path: "/departamentos" },
+          { title: "Pagamentos", path: "/payment-settings" },
           { title: "Automações", path: "/automations" },
           { title: "Configurações", path: "/settings" },
           { title: "Meu Painel Afiliado", path: "/afiliados" },
