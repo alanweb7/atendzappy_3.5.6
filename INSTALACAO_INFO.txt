@@ -36,4 +36,3 @@ COMANDOS ÚTEIS:
 - Ver logs frontend: sudo pm2 logs wesender-frontend
 - Reiniciar: sudo pm2 restart all
 - Ver Docker: sudo docker ps
-- Teste de arquivo editado
