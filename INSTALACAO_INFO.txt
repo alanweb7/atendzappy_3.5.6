@@ -1,0 +1,39 @@
+========================================
+INFORMAÇÕES DA INSTALAÇÃO - wesender
+Data: Thu Jun 11 14:41:35 -03 2026
+========================================
+
+ACESSOS:
+- Frontend: https://crm.wesenderbrasil.com.br
+- Backend: https://crm-api.wesenderbrasil.com.br
+- Login: user@faedeveloper.com.br
+- Senha: 102030
+
+PORTAS:
+- Frontend: 3000
+- Backend: 4000
+- Redis: 5000
+
+CREDENCIAIS:
+- Usuário Deploy: deploy
+- Senha Deploy: Master123
+- Senha Redis: N8SZZymykv5mSe
+
+BANCO DE DADOS POSTGRESQL:
+- Banco: wesender
+- Usuário: wesender
+- Senha: ZdG387FhYsm0olSm097541HMSdS
+- Host: localhost
+- Porta: 5432
+
+LIMITES:
+- Max WhatsApp: 9999
+- Max Usuários: 9999
+
+COMANDOS ÚTEIS:
+- Ver status: sudo pm2 status
+- Ver logs backend: sudo pm2 logs wesender-backend
+- Ver logs frontend: sudo pm2 logs wesender-frontend
+- Reiniciar: sudo pm2 restart all
+- Ver Docker: sudo docker ps
+

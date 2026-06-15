@@ -1,0 +1,22 @@
+[
+  {
+    "id": "556384052066@s.whatsapp.net",
+    "name": "Guilherme Oliveira"
+  },
+  {
+    "id": "556392047175@s.whatsapp.net",
+    "name": "Kauã Santos"
+  },
+  {
+    "id": "556392508682@s.whatsapp.net",
+    "name": "Milena Suporte Resolve Promotora"
+  },
+  {
+    "id": "556391327981@s.whatsapp.net",
+    "name": "Formoso Novo"
+  },
+  {
+    "id": "556384541463@s.whatsapp.net",
+    "name": "Cléo Oliveira | Icashcard"
+  }
+]

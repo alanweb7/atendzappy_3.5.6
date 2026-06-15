@@ -1,0 +1,75 @@
+import {
+  Table,
+  Column,
+  CreatedAt,
+  UpdatedAt,
+  Model,
+  PrimaryKey,
+  ForeignKey,
+  BelongsTo,
+  AutoIncrement,
+  Default
+} from "sequelize-typescript";
+
+import Contact from "./Contact";
+import User from "./User";
+import Ticket from "./Ticket";
+import Company from "./Company";
+
+@Table
+class TicketNote extends Model<TicketNote> {
+  @PrimaryKey
+  @AutoIncrement
+  @Column
+  id: number;
+
+  @Column
+  note: string;
+
+  @ForeignKey(() => User)
+  @Column
+  userId: number;
+
+  @BelongsTo(() => User)
+  user: User;
+
+  @ForeignKey(() => Contact)
+  @Column
+  contactId: number;
+
+  @BelongsTo(() => Contact)
+  contact: Contact;
+
+  @ForeignKey(() => Ticket)
+  @Column
+  ticketId: number;
+
+  @BelongsTo(() => Ticket)
+  ticket: Ticket;
+
+  @ForeignKey(() => Company)
+  @Column
+  companyId: number;
+
+  @BelongsTo(() => Company)
+  company: Company;
+
+  @Default("user")
+  @Column
+  source: string;
+
+  @Column
+  reminderAt: Date;
+
+  @Default(false)
+  @Column
+  reminderDone: boolean;
+
+  @CreatedAt
+  createdAt: Date;
+
+  @UpdatedAt
+  updatedAt: Date;
+}
+
+export default TicketNote;

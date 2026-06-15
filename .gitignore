@@ -1,0 +1,58 @@
+# Node
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build / dependencies
+dist/
+build/
+
+# Large media and binary files
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.zip
+*.tar
+*.gz
+*.jar
+
+# Model / trained data
+*.traineddata
+
+# Geo / large data
+*.geojson
+*.sqlite
+*.sql
+
+# Certificates and keys
+*.pem
+certs/
+
+# npm/yarn lockfiles (optional)
+# package-lock.json
+# yarn.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Generated public uploads
+public/uploads/
+
+# Other
+*.exe
+*.dll
+
+# If you use Git LFS for large files, keep patterns above and track them with `git lfs track` as needed
