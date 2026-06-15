@@ -56,3 +56,6 @@ public/uploads/
 *.dll
 
 # If you use Git LFS for large files, keep patterns above and track them with `git lfs track` as needed
+
+# Ignore any directory or file starting with "company" at any level
+**/company*/
