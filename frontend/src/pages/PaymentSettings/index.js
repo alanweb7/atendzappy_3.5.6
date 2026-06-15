@@ -98,6 +98,7 @@ const PaymentSettings = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const editing = Boolean(form.id);
@@ -213,6 +214,40 @@ const PaymentSettings = () => {
       fetchRecords();
     } catch (err) {
       toastError(err);
+    }
+  };
+
+  const handleTestConnection = async item => {
+    if (item.provider !== "asaas") {
+      toast.info("Teste de conexão disponível apenas para Asaas por enquanto.");
+      return;
+    }
+
+    setTestingConnection(true);
+    try {
+      const response = await fetch("https://api.asaas.com/v3/account", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          access_token: item.token
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`✓ Conexão bem-sucedida! Conta: ${data.name || "Asaas"}`);
+      } else if (response.status === 401) {
+        toast.error("✗ Token inválido ou expirado.");
+      } else if (response.status === 429) {
+        toast.error("✗ Muitas requisições. Tente novamente em alguns segundos.");
+      } else {
+        toast.error("✗ Erro ao conectar ao Asaas. Verifique o token.");
+      }
+    } catch (error) {
+      toast.error("✗ Erro de conexão. Verifique sua internet.");
+      console.error("Connection test error:", error);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -336,6 +371,14 @@ const PaymentSettings = () => {
                         onClick={() => handleEdit(item)}
                       >
                         Editar
+                      </Button>
+                      <Button
+                        size="small"
+                        disabled={testingConnection || !item.active}
+                        onClick={() => handleTestConnection(item)}
+                        style={{ color: "#10b981" }}
+                      >
+                        {testingConnection ? "Testando..." : "Testar"}
                       </Button>
                       <Tooltip title="Remover configuração">
                         <IconButton
