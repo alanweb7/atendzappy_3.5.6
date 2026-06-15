@@ -202,9 +202,6 @@ const Invoices = () => {
   const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [selectedInvoiceForBilling, setSelectedInvoiceForBilling] = useState(null);
   const [sendingBilling, setSendingBilling] = useState(false);
-  const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
-  const [paymentLinkExpires, setPaymentLinkExpires] = useState(null);
-  const [generatingLink, setGeneratingLink] = useState(false);
   const [tablePage, setTablePage] = useState(0);
   const [clientPayModalOpen, setClientPayModalOpen] = useState(false);
   const [clientPayLink, setClientPayLink] = useState("");
@@ -292,17 +289,12 @@ const Invoices = () => {
       } else {
         toast.warn("Nenhum canal de envio disponível. Verifique se a empresa possui e-mail/telefone e se o WhatsApp está conectado.");
       }
-      if (data.linkInvoice) {
-        dispatch({ type: "UPDATE_USERS", payload: { ...selectedInvoiceForBilling, linkInvoice: data.linkInvoice } });
-      }
     } catch (err) {
       toastError(err);
     }
     setSendingBilling(false);
     setBillingModalOpen(false);
     setSelectedInvoiceForBilling(null);
-    setPaymentLinkGenerated("");
-    setPaymentLinkExpires(null);
   };
 
   useEffect(() => {
@@ -654,52 +646,19 @@ const Invoices = () => {
               <Typography variant="body1"><strong>Detalhes:</strong> {selectedInvoiceForBilling.detail}</Typography>
               <Typography variant="body1"><strong>Valor:</strong> {selectedInvoiceForBilling.value?.toLocaleString("pt-br", { style: "currency", currency: "BRL" })}</Typography>
               <Typography variant="body1"><strong>Vencimento:</strong> {moment(selectedInvoiceForBilling.dueDate).format("DD/MM/YYYY")}</Typography>
+              {selectedInvoiceForBilling.linkInvoice && (
+                <>
+                  <Typography variant="body1" style={{ marginTop: 12, color: "#10b981" }}>
+                    <strong>✓ Link de Pagamento Gerado</strong>
+                  </Typography>
+                  <Typography variant="caption" style={{ color: "#666", display: "block", marginTop: 4 }}>
+                    O link será incluído na cobrança
+                  </Typography>
+                </>
+              )}
             </Box>
           )}
-          {paymentLinkGenerated ? (
-            <Box style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12, marginBottom: 16 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" style={{ marginBottom: 4 }}>
-                <Typography variant="body2" style={{ color: "#166534", fontWeight: 600 }}>
-                  ✓ Link de Pagamento Gerado
-                </Typography>
-                <Button
-                  size="small"
-                  disabled={generatingLink}
-                  onClick={() => handleGeneratePaymentLink(true)}
-                  style={{ color: "#92400e", fontSize: "0.7rem", textTransform: "none", padding: "2px 8px", border: "1px solid #fcd34d", borderRadius: 4 }}
-                >
-                  {generatingLink ? <CircularProgress size={12} /> : "↻ Gerar Novo Link"}
-                </Button>
-              </Box>
-              <Typography variant="body2" style={{ wordBreak: "break-all", color: "#166534", fontSize: "0.8rem", marginBottom: 4 }}>
-                {paymentLinkGenerated}
-              </Typography>
-              <Typography variant="caption" style={{ color: "#6b7280", display: "block", marginBottom: 8 }}>
-                {paymentLinkExpires
-                  ? `Expira em: ${moment(paymentLinkExpires).format("DD/MM/YYYY")}`
-                  : "Sem data de expiração"}
-              </Typography>
-              <Button size="small" variant="outlined" onClick={handleCopyLink} style={{ color: "#166534", borderColor: "#86efac" }}>
-                Copiar link
-              </Button>
-            </Box>
-          ) : (
-            <Box style={{ textAlign: "center", marginBottom: 16 }}>
-              <Typography variant="body2" style={{ color: "#666", marginBottom: 12 }}>
-                Gere um link de pagamento antes de enviar a cobrança
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={generatingLink}
-                onClick={() => handleGeneratePaymentLink(false)}
-                style={{ backgroundColor: "#10b981", color: "white", padding: "10px" }}
-              >
-                {generatingLink ? <CircularProgress size={20} style={{ color: "white" }} /> : "🔗 Gerar Link de Pagamento"}
-              </Button>
-            </Box>
-          )}
-          <Typography variant="body2" style={{ color: "#666", textAlign: "center" }}>
+          <Typography variant="body2" style={{ color: "#666" }}>
             A cobrança será enviada via <strong>E-mail</strong> e <strong>WhatsApp</strong> para a empresa.
           </Typography>
         </DialogContent>
