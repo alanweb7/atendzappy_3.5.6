@@ -28,4 +28,10 @@ paymentSettingRoutes.delete(
   CompanyPaymentSettingsController.remove
 );
 
+paymentSettingRoutes.post(
+  "/payment-settings/test-connection/:provider",
+  isAuth,
+  CompanyPaymentSettingsController.testConnection
+);
+
 export default paymentSettingRoutes;
