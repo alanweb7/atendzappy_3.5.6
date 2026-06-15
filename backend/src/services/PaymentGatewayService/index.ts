@@ -443,3 +443,58 @@ export const cancelGatewayPayment = async (invoice: FinanceiroFatura): Promise<v
     await cancelMercadoPagoPreference(invoice);
   }
 };
+
+interface GenerateSimplePaymentLinkParams {
+  companyId: number;
+  invoiceId: number;
+  value: number;
+  description: string;
+  dueDate: string;
+}
+
+export const generateSimpleAsaasPaymentLink = async ({
+  companyId,
+  invoiceId,
+  value,
+  description,
+  dueDate
+}: GenerateSimplePaymentLinkParams): Promise<PaymentLinkResult> => {
+  const tokenRecord = await getCompanyPaymentToken(companyId, "asaas");
+
+  if (!tokenRecord.token) {
+    throw new AppError("Token Asaas não configurado.", 400);
+  }
+
+  const payload = sanitizePayload({
+    name: description || `Fatura #${invoiceId}`,
+    description: description || `Fatura #${invoiceId}`,
+    value: Number(value),
+    billingType: "UNDEFINED",
+    chargeType: "DETACHED",
+    dueDateLimitDays: 10,
+    externalReference: String(invoiceId),
+    notificationEnabled: false
+  });
+
+  try {
+    const response = await axios.post(
+      `${ASAAS_BASE_URL}/paymentLinks`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          access_token: tokenRecord.token
+        }
+      }
+    );
+
+    return {
+      paymentLink: response.data?.url || response.data?.link,
+      paymentExternalId: response.data?.id || null
+    };
+  } catch (error: any) {
+    const status = error?.response?.status || 500;
+    const message = extractAsaasErrorMessage(error);
+    throw new AppError(`[Asaas] ${message}`, status);
+  }
+};

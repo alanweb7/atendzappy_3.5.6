@@ -16,6 +16,7 @@ import ShowInvoceService from "../services/InvoicesService/ShowInvoiceService";
 import UpdateInvoiceService from "../services/InvoicesService/UpdateInvoiceService";
 import DeleteInvoiceService from "../services/InvoicesService/DeleteInvoiceService";
 import CreateInvoiceService from "../services/InvoicesService/CreateInvoiceService";
+import { generateSimpleAsaasPaymentLink } from "../services/PaymentGatewayService";
 
 type IndexQuery = {
   searchParam: string;
@@ -268,6 +269,22 @@ export const sendBillingNotification = async (
     msgTemplate = msgSetting?.value || "";
   } catch (e) {}
 
+  let paymentLink = "";
+  try {
+    const paymentResult = await generateSimpleAsaasPaymentLink({
+      companyId: invoice.companyId,
+      invoiceId: invoice.id,
+      value: invoice.value,
+      description: invoice.detail || `Fatura #${invoice.id}`,
+      dueDate
+    });
+    paymentLink = paymentResult.paymentLink;
+    invoice.linkInvoice = paymentLink;
+    await invoice.save();
+  } catch (error) {
+    console.error("Error generating payment link:", error);
+  }
+
   // Função para substituir variáveis no template
   const replaceVars = (text: string): string => {
     return text
@@ -275,11 +292,12 @@ export const sendBillingNotification = async (
       .replace(/\{plano\}/g, invoice.detail || "")
       .replace(/\{valor\}/g, value)
       .replace(/\{vencimento\}/g, dueDate)
-      .replace(/\{link\}/g, "");
+      .replace(/\{link\}/g, paymentLink || "");
   };
 
   // Mensagem padrão caso não tenha template configurado
-  const defaultWhatsappBody = `*Aviso de Cobrança - ${appName}*\n\nOlá *${targetCompany.name}*,\n\nIdentificamos que a fatura abaixo encontra-se em aberto:\n\n*Detalhes:* ${invoice.detail}\n*Valor:* ${value}\n*Vencimento:* ${dueDate}\n\nPor favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.\n\nEm caso de dúvidas, entre em contato conosco.\n\nAtenciosamente,\n*${appName}*`;
+  const paymentLinkText = paymentLink ? `\n\n🔗 *Link de Pagamento:*\n${paymentLink}` : "";
+  const defaultWhatsappBody = `*Aviso de Cobrança - ${appName}*\n\nOlá *${targetCompany.name}*,\n\nIdentificamos que a fatura abaixo encontra-se em aberto:\n\n*Detalhes:* ${invoice.detail}\n*Valor:* ${value}\n*Vencimento:* ${dueDate}\n\nPor favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.${paymentLinkText}\n\nEm caso de dúvidas, entre em contato conosco.\n\nAtenciosamente,\n*${appName}*`;
 
   const whatsappBody = msgTemplate ? replaceVars(msgTemplate) : defaultWhatsappBody;
 
@@ -288,6 +306,10 @@ export const sendBillingNotification = async (
   // Enviar email de cobrança
   if (targetCompany.email) {
     try {
+      const paymentLinkHtml = paymentLink
+        ? `<p><strong>🔗 Link de Pagamento:</strong><br><a href="${paymentLink}" style="color: #007bff; text-decoration: none;">${paymentLink}</a></p>`
+        : "";
+
       const emailBody = `
         <h2>Aviso de Cobrança - ${appName}</h2>
         <p>Olá <strong>${targetCompany.name}</strong>,</p>
@@ -298,6 +320,7 @@ export const sendBillingNotification = async (
           <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Vencimento</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${dueDate}</td></tr>
         </table>
         <p>Por favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.</p>
+        ${paymentLinkHtml}
         <p>Em caso de dúvidas, entre em contato conosco.</p>
         <br>
         <p>Atenciosamente,<br><strong>${appName}</strong></p>
@@ -336,7 +359,8 @@ export const sendBillingNotification = async (
 
   return res.status(200).json({
     message: "Notificação de cobrança enviada!",
-    results
+    results,
+    linkInvoice: paymentLink
   });
 };
 

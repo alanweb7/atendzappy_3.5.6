@@ -202,6 +202,7 @@ const Invoices = () => {
   const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [selectedInvoiceForBilling, setSelectedInvoiceForBilling] = useState(null);
   const [sendingBilling, setSendingBilling] = useState(false);
+  const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
   const [tablePage, setTablePage] = useState(0);
   const rowsPerPage = 10;
 
@@ -255,12 +256,18 @@ const Invoices = () => {
       } else {
         toast.warn("Nenhum canal de envio disponível. Verifique se a empresa possui e-mail/telefone e se o WhatsApp está conectado.");
       }
+      // Atualizar a fatura com o link de pagamento gerado
+      dispatch({
+        type: "UPDATE_USERS",
+        payload: { ...selectedInvoiceForBilling, linkInvoice: data.linkInvoice || "" }
+      });
     } catch (err) {
       toastError(err);
     }
     setSendingBilling(false);
     setBillingModalOpen(false);
     setSelectedInvoiceForBilling(null);
+    setPaymentLinkGenerated("");
   };
 
   useEffect(() => {
@@ -610,10 +617,20 @@ const Invoices = () => {
               <Typography variant="body1"><strong>Detalhes:</strong> {selectedInvoiceForBilling.detail}</Typography>
               <Typography variant="body1"><strong>Valor:</strong> {selectedInvoiceForBilling.value?.toLocaleString("pt-br", { style: "currency", currency: "BRL" })}</Typography>
               <Typography variant="body1"><strong>Vencimento:</strong> {moment(selectedInvoiceForBilling.dueDate).format("DD/MM/YYYY")}</Typography>
+              {selectedInvoiceForBilling.linkInvoice && (
+                <>
+                  <Typography variant="body1" style={{ marginTop: 12, color: "#10b981" }}>
+                    <strong>✓ Link de Pagamento Gerado</strong>
+                  </Typography>
+                  <Typography variant="caption" style={{ color: "#666", display: "block", marginTop: 4 }}>
+                    O link será incluído na cobrança
+                  </Typography>
+                </>
+              )}
             </Box>
           )}
           <Typography variant="body2" style={{ color: "#666" }}>
-            A cobrança será enviada via <strong>E-mail</strong> e <strong>WhatsApp</strong> para a empresa.
+            A cobrança será enviada via <strong>E-mail</strong> e <strong>WhatsApp</strong> para a empresa com o link de pagamento.
           </Typography>
         </DialogContent>
         <DialogActions style={{ padding: "16px 24px", justifyContent: "center", gap: 16 }}>
