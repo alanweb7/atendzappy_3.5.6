@@ -204,34 +204,25 @@ const Invoices = () => {
   const [sendingBilling, setSendingBilling] = useState(false);
   const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
   const [tablePage, setTablePage] = useState(0);
-  const [clientPayModalOpen, setClientPayModalOpen] = useState(false);
-  const [clientPayLink, setClientPayLink] = useState("");
-  const [clientPayInvoice, setClientPayInvoice] = useState(null);
-  const [generatingClientLink, setGeneratingClientLink] = useState(false);
-  const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
-  const [paymentLinkExpires, setPaymentLinkExpires] = useState(null);
   const rowsPerPage = 10;
 
   const isCompanyIdOne = user?.companyId === 1;
 
-  const handleOpenContactModal = async (invoice) => {
-    setClientPayInvoice(invoice);
-    setClientPayLink(invoice.linkInvoice || "");
-    setClientPayModalOpen(true);
-
-    if (!invoice.linkInvoice) {
-      setGeneratingClientLink(true);
-      try {
-        const { data } = await api.post(`/invoices/${invoice.id}/generate-payment-link`);
-        if (data.linkInvoice) {
-          setClientPayLink(data.linkInvoice);
-          dispatch({ type: "UPDATE_USERS", payload: { ...invoice, linkInvoice: data.linkInvoice } });
-        }
-      } catch (err) {
-        toastError(err);
+  const handleOpenContactModal = async (invoices) => {
+    try {
+      const paymentSettings = await listCompanyPaymentSettings();
+      const hasGateway = Array.isArray(paymentSettings) && paymentSettings.length > 0 && paymentSettings.some(p => p.active);
+      if (!hasGateway) {
+        setNoGatewayModalOpen(true);
+        return;
       }
-      setGeneratingClientLink(false);
+    } catch (err) {
+      toastError(err);
+      return;
     }
+    setStoragePlans(invoices);
+    setSelectedContactId(null);
+    setContactModalOpen(true);
   };
 
   const handleCloseContactModal = () => {
@@ -252,17 +243,35 @@ const Invoices = () => {
     setSelectedInvoiceForPay(null);
   };
 
+  const handleGeneratePaymentLink = async () => {
+    if (!selectedInvoiceForBilling) return;
+    setSendingBilling(true);
+    try {
+      const { data } = await api.post(`/invoices/${selectedInvoiceForBilling.id}/send-billing`);
+      setPaymentLinkGenerated(data.linkInvoice || "");
+      if (data.linkInvoice) {
+        toast.success("Link de pagamento gerado com sucesso!");
+      } else {
+        toast.warn("Link não foi gerado. Verifique a configuração do Asaas.");
+      }
+    } catch (err) {
+      toastError(err);
+    }
+    setSendingBilling(false);
+  };
+
+  const handleCopyToClipboard = () => {
+    if (paymentLinkGenerated) {
+      navigator.clipboard.writeText(paymentLinkGenerated);
+      toast.success("Link copiado para a área de transferência!");
+    }
+  };
+
   const handleSendBilling = async () => {
     if (!selectedInvoiceForBilling) return;
     setSendingBilling(true);
     try {
       const { data } = await api.post(`/invoices/${selectedInvoiceForBilling.id}/send-billing`);
-      if (data?.linkInvoice) {
-        setPaymentLinkGenerated(data.linkInvoice);
-      }
-      if (data?.expiresAt) {
-        setPaymentLinkExpires(data.expiresAt);
-      }
       const msgs = [];
       if (data.results?.email) msgs.push("E-mail");
       if (data.results?.whatsapp) msgs.push("WhatsApp");
@@ -283,20 +292,6 @@ const Invoices = () => {
     setBillingModalOpen(false);
     setSelectedInvoiceForBilling(null);
     setPaymentLinkGenerated("");
-  };
-
-  const handleCopyToClipboard = async () => {
-    if (!paymentLinkGenerated) {
-      toast.warn("Nenhum link disponível para copiar.");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(paymentLinkGenerated);
-      toast.success("Link copiado!");
-    } catch (err) {
-      toastError(err);
-    }
   };
 
   useEffect(() => {
@@ -517,8 +512,6 @@ const Invoices = () => {
                                 style={{ color: "#f59e0b" }}
                                 onClick={() => {
                                   setSelectedInvoiceForBilling(invoice);
-                                  setPaymentLinkGenerated(invoice.linkInvoice || "");
-                                  setPaymentLinkExpires(null);
                                   setBillingModalOpen(true);
                                 }}
                               >
@@ -631,37 +624,27 @@ const Invoices = () => {
       {/* Modal - Enviar Cobrança */}
       <Dialog
         open={billingModalOpen}
-        onClose={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); setPaymentLinkExpires(null); }}
+        onClose={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); }}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle style={{ backgroundColor: "#f59e0b", color: "white", textAlign: "center" }}>
           Enviar Cobrança
         </DialogTitle>
-        <DialogContent style={{ padding: 24 }}>
-          <Typography variant="h6" style={{ marginBottom: 16, color: "#333", textAlign: "center" }}>
+        <DialogContent style={{ padding: 24, textAlign: "center" }}>
+          <Typography variant="h6" style={{ marginBottom: 16, color: "#333" }}>
             Enviar notificação de cobrança?
           </Typography>
           {selectedInvoiceForBilling && (
-            <Box style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 8, marginBottom: 16 }}>
+            <Box style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 8, marginBottom: 16, textAlign: "left" }}>
               <Typography variant="body1"><strong>Empresa:</strong> {selectedInvoiceForBilling.company?.name || "Empresa"} (ID: {selectedInvoiceForBilling.companyId})</Typography>
               <Typography variant="body1"><strong>Detalhes:</strong> {selectedInvoiceForBilling.detail}</Typography>
               <Typography variant="body1"><strong>Valor:</strong> {selectedInvoiceForBilling.value?.toLocaleString("pt-br", { style: "currency", currency: "BRL" })}</Typography>
               <Typography variant="body1"><strong>Vencimento:</strong> {moment(selectedInvoiceForBilling.dueDate).format("DD/MM/YYYY")}</Typography>
-              {selectedInvoiceForBilling.linkInvoice && (
-                <>
-                  <Typography variant="body1" style={{ marginTop: 12, color: "#10b981" }}>
-                    <strong>✓ Link de Pagamento Gerado</strong>
-                  </Typography>
-                  <Typography variant="caption" style={{ color: "#666", display: "block", marginTop: 4 }}>
-                    O link será incluído na cobrança
-                  </Typography>
-                </>
-              )}
             </Box>
           )}
 
-          {paymentLinkGenerated && (
+          {paymentLinkGenerated ? (
             <Box style={{ backgroundColor: "#dcfce7", padding: 16, borderRadius: 8, marginBottom: 16, textAlign: "left", border: "1px solid #86efac" }}>
               <Typography variant="body2" style={{ marginBottom: 12, color: "#166534", fontWeight: 600 }}>
                 ✓ Link de Pagamento Gerado
@@ -691,93 +674,67 @@ const Invoices = () => {
                 Clique em "Enviar Cobrança" para enviar o link via Email e WhatsApp
               </Typography>
             </Box>
+          ) : (
+            <>
+              <Typography variant="body2" style={{ color: "#666", marginBottom: 12 }}>
+                Gere um link de pagamento antes de enviar a cobrança
+              </Typography>
+              <Button
+                onClick={handleGeneratePaymentLink}
+                disabled={sendingBilling}
+                fullWidth
+                style={{
+                  backgroundColor: "#10b981",
+                  color: "white",
+                  padding: "10px 24px",
+                  marginBottom: 12
+                }}
+              >
+                {sendingBilling ? <CircularProgress size={20} style={{ color: "white" }} /> : "🔗 Gerar Link de Pagamento"}
+              </Button>
+            </>
           )}
-          <Typography variant="body2" style={{ color: "#666" }}>
-            A cobrança será enviada via <strong>E-mail</strong> e <strong>WhatsApp</strong> para a empresa com o link de pagamento.
+
+          <Typography variant="body2" style={{ color: "#666", marginTop: 12 }}>
+            A cobrança será enviada via <strong>E-mail</strong> e <strong>WhatsApp</strong> para a empresa.
           </Typography>
         </DialogContent>
         <DialogActions style={{ padding: "16px 24px", justifyContent: "center", gap: 16 }}>
-          <Button onClick={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); }} variant="outlined" style={{ padding: "8px 24px" }} disabled={sendingBilling}>
+          <Button onClick={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); }} variant="outlined" style={{ padding: "8px 24px" }} disabled={sendingBilling}>
             Cancelar
           </Button>
-          <Button onClick={handleSendBilling} variant="contained" disabled={sendingBilling} style={{ backgroundColor: "#f59e0b", color: "white", padding: "8px 24px" }}>
+          <Button
+            onClick={handleSendBilling}
+            variant="contained"
+            disabled={sendingBilling || !paymentLinkGenerated}
+            style={{ backgroundColor: "#f59e0b", color: "white", padding: "8px 24px" }}
+          >
             {sendingBilling ? <CircularProgress size={20} style={{ color: "white" }} /> : "Enviar Cobrança"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal - Pagamento do cliente */}
+      {/* Modal - Gateway não configurado */}
       <Dialog
-        open={clientPayModalOpen}
-        onClose={() => setClientPayModalOpen(false)}
+        open={noGatewayModalOpen}
+        onClose={() => setNoGatewayModalOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle style={{ backgroundColor: "#1976d2", color: "white", textAlign: "center" }}>
-          Realizar Pagamento
+        <DialogTitle style={{ backgroundColor: "#f44336", color: "white", textAlign: "center" }}>
+          Atenção
         </DialogTitle>
-        <DialogContent style={{ padding: 24 }}>
-          {clientPayInvoice && (
-            <Box style={{ marginBottom: 16 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                <strong>Fatura:</strong> {clientPayInvoice.detail}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                <strong>Valor:</strong> {Number(clientPayInvoice.value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                <strong>Vencimento:</strong> {moment(clientPayInvoice.dueDate).format("DD/MM/YYYY")}
-              </Typography>
-            </Box>
-          )}
-
-          {generatingClientLink ? (
-            <Box style={{ textAlign: "center", padding: "24px 0" }}>
-              <CircularProgress size={32} />
-              <Typography variant="body2" color="textSecondary" style={{ marginTop: 12 }}>
-                Gerando link de pagamento...
-              </Typography>
-            </Box>
-          ) : clientPayLink ? (
-            <Box style={{ backgroundColor: "#e3f2fd", border: "1px solid #90caf9", borderRadius: 8, padding: 16 }}>
-              <Typography variant="body2" style={{ color: "#1565c0", fontWeight: 600, marginBottom: 8 }}>
-                Link de pagamento gerado:
-              </Typography>
-              <Typography variant="body2" style={{ wordBreak: "break-all", color: "#1565c0", fontSize: "0.8rem", marginBottom: 12 }}>
-                {clientPayLink}
-              </Typography>
-              <Box display="flex" style={{ gap: 8 }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  style={{ backgroundColor: "#1976d2", color: "white" }}
-                  onClick={() => window.open(clientPayLink, "_blank")}
-                >
-                  Pagar agora
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    navigator.clipboard.writeText(clientPayLink);
-                    toast.success("Link copiado!");
-                  }}
-                >
-                  Copiar link
-                </Button>
-              </Box>
-            </Box>
-          ) : (
-            <Box style={{ textAlign: "center", padding: "16px 0" }}>
-              <Typography variant="body2" color="textSecondary">
-                Não foi possível gerar o link de pagamento. Entre em contato com o administrador.
-              </Typography>
-            </Box>
-          )}
+        <DialogContent style={{ padding: 24, textAlign: "center" }}>
+          <Typography variant="h6" style={{ marginBottom: 16, color: "#333" }}>
+            Entre em contato com o administrador
+          </Typography>
+          <Typography variant="body1" style={{ color: "#666" }}>
+            Para realizar o pagamento, por favor, fale com o administrador do sistema.
+          </Typography>
         </DialogContent>
-        <DialogActions style={{ padding: "16px 24px" }}>
-          <Button onClick={() => setClientPayModalOpen(false)}>
-            Fechar
+        <DialogActions style={{ padding: "16px 24px", justifyContent: "center" }}>
+          <Button onClick={() => setNoGatewayModalOpen(false)} variant="contained" style={{ backgroundColor: "#f44336", color: "white", padding: "8px 24px" }}>
+            Entendido
           </Button>
         </DialogActions>
       </Dialog>

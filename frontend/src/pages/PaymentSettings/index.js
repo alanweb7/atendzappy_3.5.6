@@ -19,7 +19,6 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import { makeStyles } from "@material-ui/core/styles";
 import { toast } from "react-toastify";
 import { useSystemAlert } from "../../components/SystemAlert";
-import api from "../../services/api";
 
 import {
   deleteCompanyPaymentSetting,
@@ -99,7 +98,7 @@ const PaymentSettings = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(null);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const editing = Boolean(form.id);
@@ -219,19 +218,36 @@ const PaymentSettings = () => {
   };
 
   const handleTestConnection = async item => {
-    setTesting(item.id);
+    if (item.provider !== "asaas") {
+      toast.info("Teste de conexão disponível apenas para Asaas por enquanto.");
+      return;
+    }
+
+    setTestingConnection(true);
     try {
-      const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
-      if (data.success) {
-        toast.success(data.message || "Conexão bem-sucedida!");
+      const response = await fetch("https://api.asaas.com/v3/account", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          access_token: item.token
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`✓ Conexão bem-sucedida! Conta: ${data.name || "Asaas"}`);
+      } else if (response.status === 401) {
+        toast.error("✗ Token inválido ou expirado.");
+      } else if (response.status === 429) {
+        toast.error("✗ Muitas requisições. Tente novamente em alguns segundos.");
       } else {
-        toast.error(data.message || "Falha na conexão.");
+        toast.error("✗ Erro ao conectar ao Asaas. Verifique o token.");
       }
     } catch (error) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao testar conexão";
-      toast.error(errorMessage);
+      toast.error("✗ Erro de conexão. Verifique sua internet.");
+      console.error("Connection test error:", error);
     } finally {
-      setTesting(null);
+      setTestingConnection(false);
     }
   };
 
@@ -348,16 +364,7 @@ const PaymentSettings = () => {
                 <Paper variant="outlined" style={{ padding: 16, borderRadius: 12 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <span className={classes.providerBadge}>{item.provider}</span>
-                    <Box display="flex" gap={8} alignItems="center">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        disabled={testing === item.id}
-                        onClick={() => handleTestConnection(item)}
-                      >
-                        {testing === item.id ? "Testando..." : "Testar"}
-                      </Button>
+                    <Box display="flex" gap={8}>
                       <Button
                         size="small"
                         color="primary"
@@ -367,11 +374,11 @@ const PaymentSettings = () => {
                       </Button>
                       <Button
                         size="small"
-                        disabled={testing === item.id || !item.active}
+                        disabled={testingConnection || !item.active}
                         onClick={() => handleTestConnection(item)}
                         style={{ color: "#10b981" }}
                       >
-                        {testing === item.id ? "Testando..." : "Testar"}
+                        {testingConnection ? "Testando..." : "Testar"}
                       </Button>
                       <Tooltip title="Remover configuração">
                         <IconButton
