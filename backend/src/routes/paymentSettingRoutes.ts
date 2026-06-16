@@ -28,7 +28,6 @@ paymentSettingRoutes.post(
   isAuth,
   CompanyPaymentSettingsController.generatePaymentLink
 );
-
 paymentSettingRoutes.post(
   "/payment-settings",
   isAuth,
@@ -45,12 +44,6 @@ paymentSettingRoutes.delete(
   "/payment-settings/:id",
   isAuth,
   CompanyPaymentSettingsController.remove
-);
-
-paymentSettingRoutes.post(
-  "/payment-settings/test-connection/:provider",
-  isAuth,
-  CompanyPaymentSettingsController.testConnection
 );
 
 export default paymentSettingRoutes;
