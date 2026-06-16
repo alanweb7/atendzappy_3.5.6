@@ -68,7 +68,7 @@ export const testConnection = async (req: Request, res: Response): Promise<Respo
       const response = await axios.get("https://api.asaas.com/v3/account", {
         headers: {
           "Content-Type": "application/json",
-          access_token: setting.token
+          "access-token": setting.token
         },
         timeout: 10000
       });
