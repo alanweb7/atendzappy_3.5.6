@@ -40,6 +40,11 @@ build/
 *.pem
 certs/
 
+# Deploy scripts with credentials
+deploy.ps1
+deploy.sh
+*.deploy
+
 # npm/yarn lockfiles (optional)
 # package-lock.json
 # yarn.lock
