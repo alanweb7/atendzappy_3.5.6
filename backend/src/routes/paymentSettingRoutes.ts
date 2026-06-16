@@ -10,6 +10,13 @@ paymentSettingRoutes.get(
   CompanyPaymentSettingsController.index
 );
 
+// Rotas específicas devem vir ANTES de rotas genéricas
+paymentSettingRoutes.post(
+  "/payment-settings/test-connection/:provider",
+  isAuth,
+  CompanyPaymentSettingsController.testConnection
+);
+
 paymentSettingRoutes.post(
   "/payment-settings/test-connection/:provider",
   isAuth,
@@ -32,12 +39,6 @@ paymentSettingRoutes.delete(
   "/payment-settings/:id",
   isAuth,
   CompanyPaymentSettingsController.remove
-);
-
-paymentSettingRoutes.post(
-  "/payment-settings/test-connection/:provider",
-  isAuth,
-  CompanyPaymentSettingsController.testConnection
 );
 
 export default paymentSettingRoutes;
