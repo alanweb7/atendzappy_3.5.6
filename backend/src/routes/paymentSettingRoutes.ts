@@ -18,16 +18,16 @@ paymentSettingRoutes.post(
 );
 
 paymentSettingRoutes.post(
+  "/payment-settings/generate-link/:provider",
+  isAuth,
+  CompanyPaymentSettingsController.generatePaymentLink
+);
+paymentSettingRoutes.post(
   "/payment-settings/test-connection/:provider",
   isAuth,
   CompanyPaymentSettingsController.testConnection
 );
 
-paymentSettingRoutes.post(
-  "/payment-settings/generate-link/:provider",
-  isAuth,
-  CompanyPaymentSettingsController.generatePaymentLink
-);
 paymentSettingRoutes.post(
   "/payment-settings",
   isAuth,
