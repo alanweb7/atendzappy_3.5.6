@@ -272,7 +272,7 @@ export const sendBillingNotification = async (
   let paymentLink = "";
   try {
     const paymentResult = await generateSimpleAsaasPaymentLink({
-      companyId: invoice.companyId,
+      companyId: Number(companyId),
       invoiceId: invoice.id,
       value: invoice.value,
       description: invoice.detail || `Fatura #${invoice.id}`,
