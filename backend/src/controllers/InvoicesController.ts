@@ -379,7 +379,13 @@ export const sendBillingNotification = async (
     message: "Notificação de cobrança enviada!",
     results,
     linkInvoice: paymentLink,
-    debug_paymentLinkError: paymentLinkError || null
+    debug: {
+      paymentLinkError: paymentLinkError || null,
+      paymentLinkGenerated: !!paymentLink,
+      invoiceId: invoice.id,
+      invoiceValue: invoice.value,
+      codeVersion: "v3-hardcoded-token"
+    }
   });
 };
 
