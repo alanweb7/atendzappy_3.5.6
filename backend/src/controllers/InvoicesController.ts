@@ -270,6 +270,7 @@ export const sendBillingNotification = async (
   } catch (e) {}
 
   let paymentLink = "";
+  let paymentLinkError = "";
   try {
     const paymentResult = await generateSimpleAsaasPaymentLink({
       companyId: Number(companyId),
@@ -281,7 +282,8 @@ export const sendBillingNotification = async (
     paymentLink = paymentResult.paymentLink;
     invoice.linkInvoice = paymentLink;
     await invoice.save();
-  } catch (error) {
+  } catch (error: any) {
+    paymentLinkError = error?.message || String(error);
     console.error("Error generating payment link:", error);
   }
 
@@ -360,7 +362,8 @@ export const sendBillingNotification = async (
   return res.status(200).json({
     message: "Notificação de cobrança enviada!",
     results,
-    linkInvoice: paymentLink
+    linkInvoice: paymentLink,
+    debug_paymentLinkError: paymentLinkError || null
   });
 };
 
