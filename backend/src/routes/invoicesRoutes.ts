@@ -11,6 +11,7 @@ invoiceRoutes.get("/invoices/:Invoiceid", isAuth, InvoicesController.show);
 invoiceRoutes.put("/invoices/:id", isAuth, InvoicesController.update);
 invoiceRoutes.post("/invoices/pay", isAuth, InvoicesController.pay);
 invoiceRoutes.post("/invoices/:id/admin-pay", isAuth, InvoicesController.adminManualPay);
+invoiceRoutes.post("/invoices/:id/generate-payment-link", isAuth, InvoicesController.generateInvoicePaymentLink);
 invoiceRoutes.post("/invoices/:id/send-billing", isAuth, InvoicesController.sendBillingNotification);
 
 //external

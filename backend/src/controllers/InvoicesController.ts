@@ -269,23 +269,25 @@ export const sendBillingNotification = async (
     msgTemplate = msgSetting?.value || "";
   } catch (e) {}
 
-  // Gerar link de pagamento Asaas (companyId=1 é quem tem o token configurado)
-  let paymentLink = "";
-  try {
-    const linkResult = await generateSimpleAsaasPaymentLink({
-      companyId: Number(companyId),
-      invoiceId: invoice.id,
-      value: invoice.value,
-      description: invoice.detail || `Fatura #${invoice.id}`,
-      dueDate
-    });
-    paymentLink = linkResult.paymentLink || "";
-    if (paymentLink) {
-      invoice.linkInvoice = paymentLink;
-      await invoice.save();
+  // Reusar link existente ou gerar novo
+  let paymentLink = invoice.linkInvoice || "";
+  if (!paymentLink) {
+    try {
+      const linkResult = await generateSimpleAsaasPaymentLink({
+        companyId: Number(companyId),
+        invoiceId: invoice.id,
+        value: invoice.value,
+        description: invoice.detail || `Fatura #${invoice.id}`,
+        dueDate
+      });
+      paymentLink = linkResult.paymentLink || "";
+      if (paymentLink) {
+        invoice.linkInvoice = paymentLink;
+        await invoice.save();
+      }
+    } catch (err: any) {
+      console.error("[Billing] Erro ao gerar link Asaas:", err?.message || err);
     }
-  } catch (err: any) {
-    console.error("[Billing] Erro ao gerar link Asaas:", err?.message || err);
   }
 
   // Função para substituir variáveis no template
@@ -379,4 +381,43 @@ export const remove = async (
   const invoice = await DeleteInvoiceService(id);
 
   return res.status(200).json(invoice);
-}; 
+};
+
+export const generateInvoicePaymentLink = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+
+  if (companyId !== 1) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
+  const { id } = req.params;
+  const invoice = await Invoices.findByPk(id);
+
+  if (!invoice) throw new AppError("ERR_NO_INVOICE_FOUND", 404);
+
+  // Reusar link já existente
+  if (invoice.linkInvoice) {
+    return res.json({ linkInvoice: invoice.linkInvoice });
+  }
+
+  const dueDate = moment(invoice.dueDate).format("DD/MM/YYYY");
+
+  const linkResult = await generateSimpleAsaasPaymentLink({
+    companyId: Number(companyId),
+    invoiceId: invoice.id,
+    value: invoice.value,
+    description: invoice.detail || `Fatura #${invoice.id}`,
+    dueDate
+  });
+
+  const paymentLink = linkResult.paymentLink || "";
+  if (paymentLink) {
+    invoice.linkInvoice = paymentLink;
+    await invoice.save();
+  }
+
+  return res.json({ linkInvoice: paymentLink });
+};
