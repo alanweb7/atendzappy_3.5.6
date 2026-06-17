@@ -1,5 +1,6 @@
 import * as Yup from "yup";
 import { Request, Response } from "express";
+import axios from "axios";
 import AppError from "../errors/AppError";
 import Invoices from "../models/Invoices";
 import Company from "../models/Company";
@@ -16,7 +17,6 @@ import ShowInvoceService from "../services/InvoicesService/ShowInvoiceService";
 import UpdateInvoiceService from "../services/InvoicesService/UpdateInvoiceService";
 import DeleteInvoiceService from "../services/InvoicesService/DeleteInvoiceService";
 import CreateInvoiceService from "../services/InvoicesService/CreateInvoiceService";
-import { generateSimpleAsaasPaymentLink } from "../services/PaymentGatewayService";
 
 type IndexQuery = {
   searchParam: string;
@@ -269,11 +269,13 @@ export const sendBillingNotification = async (
     msgTemplate = msgSetting?.value || "";
   } catch (e) {}
 
+  const ASAAS_TOKEN = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmUzMjIwZDkzLWI3NDItNDkyZS1iMzViLTVlYzVjMmRlZjU3ZDo6JGFhY2hfMDBkNTk4NzgtNGZiZi00YTdmLTk2NTktNWUwNDdkYjEwYWI0";
+
   let paymentLink = "";
   let paymentLinkError = "";
   try {
     const paymentResult = await generateSimpleAsaasPaymentLink({
-      companyId: invoice.companyId,
+      companyId: Number(companyId),
       invoiceId: invoice.id,
       value: invoice.value,
       description: invoice.detail || `Fatura #${invoice.id}`,
@@ -283,8 +285,8 @@ export const sendBillingNotification = async (
     invoice.linkInvoice = paymentLink;
     await invoice.save();
   } catch (error: any) {
-    paymentLinkError = error?.message || String(error);
-    console.error("Error generating payment link:", error);
+    paymentLinkError = error?.response?.data?.errors?.[0]?.description || error?.message || String(error);
+    console.error("Error generating payment link:", error?.response?.data || error);
   }
 
   // Função para substituir variáveis no template
