@@ -26,6 +26,7 @@ import {
   upsertCompanyPaymentSetting
 } from "../../services/companyPaymentSettings";
 import toastError from "../../errors/toastError";
+import api from "../../services/api";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -98,6 +99,7 @@ const PaymentSettings = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const editing = Boolean(form.id);
@@ -192,6 +194,22 @@ const PaymentSettings = () => {
       toastError(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestConnection = async item => {
+    setTesting(item.id);
+    try {
+      const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
+      if (data.success) {
+        toast.success(data.message || "Conexão bem-sucedida!");
+      } else {
+        toast.error(data.message || "Falha na conexão.");
+      }
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setTesting(null);
     }
   };
 
@@ -329,7 +347,16 @@ const PaymentSettings = () => {
                 <Paper variant="outlined" style={{ padding: 16, borderRadius: 12 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <span className={classes.providerBadge}>{item.provider}</span>
-                    <Box display="flex" gap={8}>
+                    <Box display="flex" gap={8} alignItems="center">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        disabled={testing === item.id}
+                        onClick={() => handleTestConnection(item)}
+                      >
+                        {testing === item.id ? "Testando..." : "Testar"}
+                      </Button>
                       <Button
                         size="small"
                         color="primary"

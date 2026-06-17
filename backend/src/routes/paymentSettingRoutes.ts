@@ -11,6 +11,12 @@ paymentSettingRoutes.get(
 );
 
 paymentSettingRoutes.post(
+  "/payment-settings/test-connection/:provider",
+  isAuth,
+  CompanyPaymentSettingsController.testConnection
+);
+
+paymentSettingRoutes.post(
   "/payment-settings",
   isAuth,
   CompanyPaymentSettingsController.upsert
