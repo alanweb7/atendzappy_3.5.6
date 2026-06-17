@@ -269,6 +269,22 @@ export const sendBillingNotification = async (
     msgTemplate = msgSetting?.value || "";
   } catch (e) {}
 
+  let paymentLink = "";
+  try {
+    const paymentResult = await generateSimpleAsaasPaymentLink({
+      companyId: invoice.companyId,
+      invoiceId: invoice.id,
+      value: invoice.value,
+      description: invoice.detail || `Fatura #${invoice.id}`,
+      dueDate
+    });
+    paymentLink = paymentResult.paymentLink;
+    invoice.linkInvoice = paymentLink;
+    await invoice.save();
+  } catch (error) {
+    console.error("Error generating payment link:", error);
+  }
+
   // Função para substituir variáveis no template
   const replaceVars = (text: string): string => {
     return text
