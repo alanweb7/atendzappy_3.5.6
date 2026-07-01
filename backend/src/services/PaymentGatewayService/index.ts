@@ -476,21 +476,31 @@ export const generateSimpleAsaasPaymentLink = async ({
     notificationEnabled: false
   });
 
-  const response = await axios.post(
-    `${ASAAS_BASE_URL}/paymentLinks`,
-    payload,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        access_token: tokenRecord.token,
-        "User-Agent": "Wesender/1.0.0"
-      },
-      timeout: 15000
-    }
-  );
+  try {
+    const response = await axios.post(
+      `${ASAAS_BASE_URL}/paymentLinks`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          access_token: tokenRecord.token,
+          "User-Agent": "Wesender/1.0.0"
+        },
+        timeout: 15000
+      }
+    );
 
-  return {
-    paymentLink: response.data?.url || `https://www.asaas.com/c/${response.data?.id}`,
-    paymentExternalId: response.data?.id || null
-  };
+    return {
+      paymentLink: response.data?.url || `https://www.asaas.com/c/${response.data?.id}`,
+      paymentExternalId: response.data?.id || null
+    };
+  } catch (error: any) {
+    const status = error?.response?.status || 500;
+    const msg =
+      error?.response?.data?.errors?.[0]?.description ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Erro desconhecido na Asaas";
+    throw new AppError(`[Asaas] ${msg}`, status);
+  }
 };
