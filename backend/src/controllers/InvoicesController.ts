@@ -388,15 +388,15 @@ export const generateInvoicePaymentLink = async (
   res: Response
 ): Promise<Response> => {
   const { companyId } = req.user;
-
-  if (companyId !== 1) {
-    throw new AppError("ERR_NO_PERMISSION", 403);
-  }
-
   const { id } = req.params;
   const invoice = await Invoices.findByPk(id);
 
   if (!invoice) throw new AppError("ERR_NO_INVOICE_FOUND", 404);
+
+  // Clientes só podem acessar faturas da própria empresa
+  if (companyId !== 1 && invoice.companyId !== companyId) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
 
   // Reusar link já existente
   if (invoice.linkInvoice) {
@@ -405,8 +405,9 @@ export const generateInvoicePaymentLink = async (
 
   const dueDate = moment(invoice.dueDate).format("DD/MM/YYYY");
 
+  // Sempre usa companyId=1 (admin) para buscar o token Asaas
   const linkResult = await generateSimpleAsaasPaymentLink({
-    companyId: Number(companyId),
+    companyId: 1,
     invoiceId: invoice.id,
     value: invoice.value,
     description: invoice.detail || `Fatura #${invoice.id}`,
