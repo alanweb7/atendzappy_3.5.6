@@ -60,9 +60,13 @@ const useAuth = () => {
         return api(originalRequest);
       }
       if (error?.response?.status === 401) {
-        localStorage.removeItem("token");
-        api.defaults.headers.Authorization = undefined;
-        setIsAuth(false);
+        const url = error?.config?.url || "";
+        const isAuthEndpoint = url.includes("/auth/");
+        if (isAuthEndpoint) {
+          localStorage.removeItem("token");
+          api.defaults.headers.Authorization = undefined;
+          setIsAuth(false);
+        }
       }
       return Promise.reject(error);
     }

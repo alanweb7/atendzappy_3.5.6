@@ -495,7 +495,9 @@ export const generateSimpleAsaasPaymentLink = async ({
       paymentExternalId: response.data?.id || null
     };
   } catch (error: any) {
-    const status = error?.response?.status || 500;
+    const asaasStatus = error?.response?.status || 500;
+    // Map Asaas 401 to 400 — invalid token is a config error, not a session error
+    const status = asaasStatus === 401 ? 400 : asaasStatus;
     const msg =
       error?.response?.data?.errors?.[0]?.description ||
       error?.response?.data?.message ||
