@@ -69,6 +69,7 @@ import { SendTextOfficialService } from "./services/WhatsAppOfficial/SendTextOff
 import { SendMediaOfficialService } from "./services/WhatsAppOfficial/SendMediaOfficialService";
 import fs from "fs";
 import mime from "mime-types";
+import { sendAutoBillingNotifications } from "./services/InvoicesService/SendAutoBillingService";
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -2311,6 +2312,20 @@ async function handleWhatsapp() {
   jobW.start();
 }
 
+async function handleAutoBillingNotification() {
+  // Dispara às 09h (America/Sao_Paulo) todos os dias
+  const job = new CronJob('0 9 * * *', async () => {
+    try {
+      await sendAutoBillingNotifications();
+    } catch (e: any) {
+      Sentry.captureException(e);
+      logger.error("[AutoBilling] Erro no cron de cobrança automática:", e.message);
+    }
+  }, null, false, 'America/Sao_Paulo');
+  job.start();
+  logger.info("[AutoBilling] Cron de cobrança automática iniciado (09h BRT).");
+}
+
 async function handleInvoiceCreate() {
   logger.info("GERANDO RECEITA...");
   const job = new CronJob('*/30 * * * * *', async () => {
@@ -2407,6 +2422,7 @@ async function handleInvoiceCreate() {
 }
 handleInvoiceCreate();
 handleWhatsapp();
+handleAutoBillingNotification();
 handleProcessLanes();
 handleCloseTicketsAutomatic();
 handleRandomUser();
