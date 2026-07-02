@@ -222,7 +222,7 @@ const SendWhatsAppMessage = async ({
   }
   try {
     await delay(msdelay);
-    const sentMessage = await wbot.sendMessage(
+    const sendPromise = wbot.sendMessage(
       number,
       {
         text: formatBody(body, ticket),
@@ -235,6 +235,10 @@ const SendWhatsAppMessage = async ({
         ...options
       }
     );
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("wbot.sendMessage timeout após 30s")), 30000)
+    );
+    const sentMessage = await Promise.race([sendPromise, timeoutPromise]);
     await ticket.update({
       lastMessage: formatBody(body, ticket),
       imported: null

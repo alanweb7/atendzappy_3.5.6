@@ -191,7 +191,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             return isJidBroadcast(jid);
           },
           browser: Browsers.appropriate("Desktop"),
-          defaultQueryTimeoutMs: undefined,
+          defaultQueryTimeoutMs: 60_000,
           msgRetryCounterCache,
           markOnlineOnConnect: false,
           retryRequestDelayMs: 500,
