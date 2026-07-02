@@ -458,7 +458,7 @@ export const generateSimpleAsaasPaymentLink = async ({
   value,
   description,
   dueDate
-}: GenerateSimplePaymentLinkParams): Promise<{ paymentLink: string; paymentExternalId: string | null }> => {
+}: GenerateSimplePaymentLinkParams): Promise<{ paymentLink: string; paymentExternalId: string | null; endDate: string | null; active: boolean }> => {
   const tokenRecord = await getCompanyPaymentToken(companyId, "asaas");
 
   if (!tokenRecord.token) {
@@ -492,7 +492,9 @@ export const generateSimpleAsaasPaymentLink = async ({
 
     return {
       paymentLink: response.data?.url || `https://www.asaas.com/c/${response.data?.id}`,
-      paymentExternalId: response.data?.id || null
+      paymentExternalId: response.data?.id || null,
+      endDate: response.data?.endDate || null,
+      active: response.data?.active ?? true
     };
   } catch (error: any) {
     const asaasStatus = error?.response?.status || 500;

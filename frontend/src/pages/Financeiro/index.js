@@ -203,6 +203,7 @@ const Invoices = () => {
   const [selectedInvoiceForBilling, setSelectedInvoiceForBilling] = useState(null);
   const [sendingBilling, setSendingBilling] = useState(false);
   const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
+  const [paymentLinkExpires, setPaymentLinkExpires] = useState(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [tablePage, setTablePage] = useState(0);
   const [clientPayModalOpen, setClientPayModalOpen] = useState(false);
@@ -251,14 +252,17 @@ const Invoices = () => {
     setSelectedInvoiceForPay(null);
   };
 
-  const handleGeneratePaymentLink = async () => {
+  const handleGeneratePaymentLink = async (force = false) => {
     if (!selectedInvoiceForBilling) return;
     setGeneratingLink(true);
     try {
-      const { data } = await api.post(`/invoices/${selectedInvoiceForBilling.id}/generate-payment-link`);
+      const url = `/invoices/${selectedInvoiceForBilling.id}/generate-payment-link${force ? "?force=true" : ""}`;
+      const { data } = await api.post(url);
       if (data.linkInvoice) {
         setPaymentLinkGenerated(data.linkInvoice);
-        toast.success("Link de pagamento gerado!");
+        setPaymentLinkExpires(data.endDate || null);
+        dispatch({ type: "UPDATE_USERS", payload: { ...selectedInvoiceForBilling, linkInvoice: data.linkInvoice } });
+        toast.success(force ? "Novo link gerado com sucesso!" : "Link de pagamento gerado!");
       } else {
         toast.warn("Link não pôde ser gerado. Verifique a configuração do Asaas.");
       }
@@ -298,6 +302,7 @@ const Invoices = () => {
     setBillingModalOpen(false);
     setSelectedInvoiceForBilling(null);
     setPaymentLinkGenerated("");
+    setPaymentLinkExpires(null);
   };
 
   useEffect(() => {
@@ -519,6 +524,7 @@ const Invoices = () => {
                                 onClick={() => {
                                   setSelectedInvoiceForBilling(invoice);
                                   setPaymentLinkGenerated(invoice.linkInvoice || "");
+                                  setPaymentLinkExpires(null);
                                   setBillingModalOpen(true);
                                 }}
                               >
@@ -631,7 +637,7 @@ const Invoices = () => {
       {/* Modal - Enviar Cobrança */}
       <Dialog
         open={billingModalOpen}
-        onClose={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); }}
+        onClose={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); setPaymentLinkExpires(null); }}
         maxWidth="sm"
         fullWidth
       >
@@ -652,11 +658,26 @@ const Invoices = () => {
           )}
           {paymentLinkGenerated ? (
             <Box style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12, marginBottom: 16 }}>
-              <Typography variant="body2" style={{ color: "#166534", fontWeight: 600, marginBottom: 4 }}>
-                ✓ Link de Pagamento Gerado
-              </Typography>
-              <Typography variant="body2" style={{ wordBreak: "break-all", color: "#166534", fontSize: "0.8rem", marginBottom: 8 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" style={{ marginBottom: 4 }}>
+                <Typography variant="body2" style={{ color: "#166534", fontWeight: 600 }}>
+                  ✓ Link de Pagamento Gerado
+                </Typography>
+                <Button
+                  size="small"
+                  disabled={generatingLink}
+                  onClick={() => handleGeneratePaymentLink(true)}
+                  style={{ color: "#92400e", fontSize: "0.7rem", textTransform: "none", padding: "2px 8px", border: "1px solid #fcd34d", borderRadius: 4 }}
+                >
+                  {generatingLink ? <CircularProgress size={12} /> : "↻ Gerar Novo Link"}
+                </Button>
+              </Box>
+              <Typography variant="body2" style={{ wordBreak: "break-all", color: "#166534", fontSize: "0.8rem", marginBottom: 4 }}>
                 {paymentLinkGenerated}
+              </Typography>
+              <Typography variant="caption" style={{ color: "#6b7280", display: "block", marginBottom: 8 }}>
+                {paymentLinkExpires
+                  ? `Expira em: ${moment(paymentLinkExpires).format("DD/MM/YYYY")}`
+                  : "Sem data de expiração"}
               </Typography>
               <Button size="small" variant="outlined" onClick={handleCopyLink} style={{ color: "#166534", borderColor: "#86efac" }}>
                 Copiar link
@@ -671,7 +692,7 @@ const Invoices = () => {
                 variant="contained"
                 fullWidth
                 disabled={generatingLink}
-                onClick={handleGeneratePaymentLink}
+                onClick={() => handleGeneratePaymentLink(false)}
                 style={{ backgroundColor: "#10b981", color: "white", padding: "10px" }}
               >
                 {generatingLink ? <CircularProgress size={20} style={{ color: "white" }} /> : "🔗 Gerar Link de Pagamento"}
@@ -684,7 +705,7 @@ const Invoices = () => {
         </DialogContent>
         <DialogActions style={{ padding: "16px 24px", justifyContent: "center", gap: 16 }}>
           <Button
-            onClick={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); }}
+            onClick={() => { setBillingModalOpen(false); setSelectedInvoiceForBilling(null); setPaymentLinkGenerated(""); setPaymentLinkExpires(null); }}
             variant="outlined"
             style={{ padding: "8px 24px" }}
             disabled={sendingBilling}

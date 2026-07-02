@@ -398,9 +398,11 @@ export const generateInvoicePaymentLink = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  // Reusar link já existente
-  if (invoice.linkInvoice) {
-    return res.json({ linkInvoice: invoice.linkInvoice });
+  const force = req.query.force === "true";
+
+  // Reusar link já existente (a menos que force=true)
+  if (invoice.linkInvoice && !force) {
+    return res.json({ linkInvoice: invoice.linkInvoice, endDate: null, regenerated: false });
   }
 
   const dueDate = moment(invoice.dueDate).format("DD/MM/YYYY");
@@ -420,5 +422,10 @@ export const generateInvoicePaymentLink = async (
     await invoice.save();
   }
 
-  return res.json({ linkInvoice: paymentLink });
+  return res.json({
+    linkInvoice: paymentLink,
+    endDate: linkResult.endDate || null,
+    active: linkResult.active ?? true,
+    regenerated: force
+  });
 };
