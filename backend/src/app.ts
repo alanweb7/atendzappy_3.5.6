@@ -18,6 +18,7 @@ import AppError from "./errors/AppError";
 import routes from "./routes";
 import * as WhatsappWidgetController from "./controllers/WhatsappWidgetController";
 import { callback as googleBusinessCallback } from "./controllers/GoogleBusinessController";
+import { asaasWebhook, mercadoPagoWebhook } from "./controllers/PaymentGatewayWebhookController";
 import logger from "./utils/logger";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import BullQueue from "./libs/queue"
@@ -143,6 +144,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Rota OAuth Google Business — pública, deve vir ANTES do roteador principal
 app.get("/google-business-callback", googleBusinessCallback);
+
+// Webhooks de gateway de pagamento — públicos, sem autenticação JWT
+// devem vir ANTES do roteador principal para não passarem por isAuth
+app.post("/webhook/payments/asaas", asaasWebhook);
+app.post("/webhook/payments/mercadopago", mercadoPagoWebhook);
 
 // Rotas públicas do widget WhatsApp — devem vir ANTES do roteador principal
 // para nunca passarem por nenhum middleware de autenticação
