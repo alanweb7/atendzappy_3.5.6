@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import AppError from "../errors/AppError";
 import HandlePaymentGatewayUpdateService from "../services/FinanceiroFaturaService/HandlePaymentGatewayUpdateService";
+import HandleInvoiceGatewayPaymentService from "../services/InvoicesService/HandleInvoiceGatewayPaymentService";
 import { getCompanyPaymentToken } from "../services/PaymentGatewayService";
 import FinanceiroFatura from "../models/FinanceiroFatura";
 
@@ -87,12 +88,16 @@ export const asaasWebhook = async (
     return res.status(200).json({ ignored: true });
   }
 
+  const eventStatus = payment.status || payload?.event;
+  const externalReference = payment.externalReference;
+
   try {
+    // Update FinanceiroFatura (internal financial module)
     await HandlePaymentGatewayUpdateService({
       provider: "asaas",
-      invoiceId: payment.externalReference,
+      invoiceId: externalReference,
       paymentExternalId: payment.id,
-      status: payment.status || payload?.event,
+      status: eventStatus,
       paidAmount: payment.value,
       paymentDate:
         payment.receivedDate ||
@@ -100,11 +105,21 @@ export const asaasWebhook = async (
         payment.paymentDate ||
         payment.dateCreated
     });
-
-    return res.status(200).json({ ok: true });
   } catch (error) {
     Sentry.captureException(error);
-    console.error("Asaas webhook error:", error);
-    return res.status(200).json({ ok: false });
+    console.error("Asaas webhook error (FinanceiroFatura):", error);
   }
+
+  try {
+    // Update Invoices (subscription billing) and extend company dueDate
+    await HandleInvoiceGatewayPaymentService({
+      invoiceId: externalReference,
+      status: eventStatus
+    });
+  } catch (error) {
+    Sentry.captureException(error);
+    console.error("Asaas webhook error (Invoices):", error);
+  }
+
+  return res.status(200).json({ ok: true });
 };
