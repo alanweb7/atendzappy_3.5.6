@@ -1239,6 +1239,22 @@ const Grupos = () => {
             </IconButton>
           </>
         )}
+
+      {/* Excluir grupo — apenas admin, apenas grupos */}
+      {selectedTicket?.isGroup && user?.profile === "admin" && (
+        <IconButton
+          size="small"
+          onClick={() => handleRemoveGroup(selectedTicket)}
+          style={{
+            ...buttonBaseStyle,
+            backgroundColor: "#f44336",
+            color: "#fff",
+          }}
+          title="Excluir grupo e conversas"
+        >
+          <DeleteIcon style={{ fontSize: iconSize }} />
+        </IconButton>
+      )}
       </>
     );
   };
@@ -3903,21 +3919,6 @@ useEffect(() => {
                       <div className={classes.unreadBadge}>
                         {ticket.unreadMessages}
                       </div>
-                    )}
-                    {/* Botão excluir grupo - apenas admin, apenas na aba de Grupos */}
-                    {tabIndex === 3 && ticket.isGroup && user?.profile === "admin" && (
-                      <Tooltip title="Excluir grupo e conversas">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveGroup(ticket);
-                          }}
-                          style={{ padding: 2 }}
-                        >
-                          <DeleteIcon style={{ fontSize: 16, color: '#f44336' }} />
-                        </IconButton>
-                      </Tooltip>
                     )}
                   </div>
                 </div>
