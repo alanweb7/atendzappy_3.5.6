@@ -1635,6 +1635,22 @@ const Atendimentos = () => {
 				>
 					<AddIcon style={{ fontSize: iconSize }} />
 				</IconButton>
+
+			{/* Excluir grupo — apenas admin, apenas grupos */}
+			{selectedTicket?.isGroup && user?.profile === "admin" && (
+				<IconButton
+					size="small"
+					onClick={() => handleRemoveGroup(selectedTicket)}
+					style={{
+						...buttonBaseStyle,
+						backgroundColor: "#f44336",
+						color: "#fff",
+					}}
+					title="Excluir grupo e conversas"
+				>
+					<DeleteIcon style={{ fontSize: iconSize }} />
+				</IconButton>
+			)}
 			</>
 		);
 	};
@@ -4311,28 +4327,27 @@ useEffect(() => {
 
 	const handleRemoveGroup = async (ticket) => {
 		if (!ticket || !ticket.isGroup) return;
-		
+		if (user?.profile !== "admin") return;
+
 		const confirmRemover = await showConfirm({
 			type: "error",
-			title: "Remover Grupo",
-			message: `Deseja realmente remover o grupo "${ticket.contact?.name || 'Sem nome'}"?`,
-			confirmText: "Sim, remover",
+			title: "Excluir Grupo",
+			message: `Deseja realmente excluir o grupo "${ticket.contact?.name || 'Sem nome'}" e todas as suas conversas? Esta ação não pode ser desfeita.`,
+			confirmText: "Sim, excluir",
 			cancelText: "Cancelar",
 		});
-		if (!confirmRemover) {
-			return;
-		}
+		if (!confirmRemover) return;
 
 		try {
-			await api.delete(`/tickets/${ticket.id}`);
-			toast.success("Grupo removido com sucesso!");
+			await api.delete(`/groups/${ticket.contactId}`);
+			toast.success("Grupo e conversas excluídos com sucesso!");
 			await loadTickets();
 			await loadUnreadCounts();
 			if (selectedTicket?.id === ticket.id) {
 				setSelectedTicket(null);
 			}
 		} catch (err) {
-			toast.error("Erro ao remover grupo");
+			toast.error(err?.response?.data?.error || "Erro ao excluir grupo");
 		}
 	};
 
