@@ -1611,46 +1611,50 @@ const Atendimentos = () => {
 						</IconButton>
 						</>
 				)}
-				<IconButton
-					size="small"
-					onClick={() => setNotesDrawerOpen(true)}
-					style={{
-						...buttonBaseStyle,
-						backgroundColor: "#6366f1",
-						color: "#fff",
-					}}
-					title="Histórico de Atendimento"
-				>
-					<StickyNote2Icon style={{ fontSize: iconSize }} />
-				</IconButton>
-				<IconButton
-					size="small"
-					onClick={() => setTagsKanbanModalOpen(true)}
-					style={{
-						...buttonBaseStyle,
-						backgroundColor: "#00a884",
-						color: "#fff",
-					}}
-					title="Tags e Kanban"
-				>
-					<AddIcon style={{ fontSize: iconSize }} />
-				</IconButton>
+				{selectedTicket.status !== "pending" && (
+					<>
+						<IconButton
+							size="small"
+							onClick={() => setNotesDrawerOpen(true)}
+							style={{
+								...buttonBaseStyle,
+								backgroundColor: "#6366f1",
+								color: "#fff",
+							}}
+							title="Histórico de Atendimento"
+						>
+							<StickyNote2Icon style={{ fontSize: iconSize }} />
+						</IconButton>
+						<IconButton
+							size="small"
+							onClick={() => setTagsKanbanModalOpen(true)}
+							style={{
+								...buttonBaseStyle,
+								backgroundColor: "#00a884",
+								color: "#fff",
+							}}
+							title="Tags e Kanban"
+						>
+							<AddIcon style={{ fontSize: iconSize }} />
+						</IconButton>
 
-			{/* Excluir grupo — apenas admin, apenas grupos */}
-			{selectedTicket?.isGroup && user?.userType === "admin" && (
-				<IconButton
-					size="small"
-					onClick={() => handleRemoveGroup(selectedTicket)}
-					style={{
-						...buttonBaseStyle,
-						backgroundColor: "#f44336",
-						color: "#fff",
-					}}
-					title="Excluir grupo e conversas"
-				>
-					<DeleteIcon style={{ fontSize: iconSize }} />
-				</IconButton>
-			)}
+						{/* Excluir grupo — apenas admin, apenas grupos */}
+						{selectedTicket?.isGroup && user?.userType === "admin" && (
+							<IconButton
+								size="small"
+								onClick={() => handleRemoveGroup(selectedTicket)}
+								style={{
+									...buttonBaseStyle,
+									backgroundColor: "#f44336",
+									color: "#fff",
+								}}
+								title="Excluir grupo e conversas"
+							>
+								<DeleteIcon style={{ fontSize: iconSize }} />
+							</IconButton>
+						)}
+					</>
+				)}
 			</>
 		);
 	};
@@ -5235,6 +5239,24 @@ useEffect(() => {
 							</>
 						</div>
 
+						{/* Footer — bloqueado para tickets pendentes */}
+						{selectedTicket?.status === "pending" ? (
+							<div style={{
+								backgroundColor: '#f0f2f5',
+								borderTop: '1px solid #e9edef',
+								padding: '14px 20px',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								gap: 10,
+							}}>
+								<CheckCircleIcon style={{ color: '#00a884', fontSize: 20 }} />
+								<Typography style={{ fontSize: 14, color: '#667781' }}>
+									Aceite o ticket para começar a responder
+								</Typography>
+							</div>
+						) : (
+						<>
 						{/* Replying Message Preview */}
 						{replyingTo && (
 							<div style={{
@@ -5517,7 +5539,9 @@ useEffect(() => {
 							)}
 						</div>
 					</>
-				) : (
+					)}
+				</>
+			) : (
 					<div className={classes.welcomeContainer}>
 						<ChatIcon className={classes.welcomeIcon} />
 						<div className={classes.welcomeTitle}>
