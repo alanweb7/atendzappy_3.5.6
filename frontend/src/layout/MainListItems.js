@@ -1157,7 +1157,7 @@ location.pathname.startsWith("/translation-manager");
                   yes={() => (
                     <ListItemLink
                       to="/settings"
-                      primary={i18n.t("mainDrawer.listItems.settings")}
+                      primary="Ajustes"
                       icon={<SettingsOutlinedIcon />}
                       onNavigate={handleNavigateFromSubmenu}
                     />

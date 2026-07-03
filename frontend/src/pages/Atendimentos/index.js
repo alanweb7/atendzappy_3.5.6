@@ -1412,36 +1412,6 @@ const Atendimentos = () => {
 						>
 							<CheckCircleIcon style={{ fontSize: iconSize }} />
 						</IconButton>
-						<IconButton
-							size="small"
-							onClick={async () => {
-								const confirmIgnorar = await showConfirm({
-									type: "warning",
-									title: "Ignorar Ticket",
-									message: "Deseja realmente ignorar este ticket?",
-									confirmText: "Sim, ignorar",
-									cancelText: "Cancelar",
-								});
-								if (confirmIgnorar) {
-									try {
-										await api.delete(`/tickets/${selectedTicket.id}`);
-										setSelectedTicket(null);
-										history.push("/atendimentos");
-										loadTickets();
-										loadUnreadCounts();
-									} catch (err) {
-									}
-								}
-							}}
-							style={{
-								...buttonBaseStyle,
-								backgroundColor: "#f44336",
-								color: "#fff",
-							}}
-							title="Ignorar"
-						>
-							<BlockIcon style={{ fontSize: iconSize }} />
-						</IconButton>
 					</>
 				)}
 				{canReturnClosedTicket && (
