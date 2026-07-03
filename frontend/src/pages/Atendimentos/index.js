@@ -128,6 +128,8 @@ import TicketActionsMenu from "../../components/TicketActionsMenu";
 import useQuickMessages from "../../hooks/useQuickMessages";
 import { toast } from "react-toastify";
 import { useSystemAlert } from "../../components/SystemAlert";
+import EmojiPickerReact from "@emoji-mart/react";
+import emojiData from "@emoji-mart/data";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -3055,7 +3057,9 @@ useEffect(() => {
 	};
 
 	const handleEmojiSelect = (emoji) => {
-		setInputMessage((prev) => prev + emoji);
+		// emoji-mart retorna objeto { native: '😀' }; fallback para string direta
+		const char = typeof emoji === "object" ? emoji.native : emoji;
+		setInputMessage((prev) => prev + char);
 		setShowEmojiPicker(false);
 	};
 
@@ -5341,34 +5345,25 @@ useEffect(() => {
 									position: 'absolute',
 									bottom: '60px',
 									left: '10px',
-									backgroundColor: '#fff',
-									border: '1px solid #e9edef',
-									borderRadius: '8px',
-									padding: '8px',
-									display: 'grid',
-									gridTemplateColumns: 'repeat(8, 1fr)',
-									gap: '4px',
-									maxWidth: '320px',
-									boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-									zIndex: 1000
+									zIndex: 1000,
+									boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+									borderRadius: '12px',
+									overflow: 'hidden',
 								}}>
-									{['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '👍', '👎', '👏', '🙌', '🤝', '🙏', '❤️', '🔥', '💯', '✅', '❌'].map((emoji) => (
-										<span
-											key={emoji}
-											onClick={() => handleEmojiSelect(emoji)}
-											style={{
-												fontSize: '24px',
-												cursor: 'pointer',
-												padding: '4px',
-												borderRadius: '4px',
-												transition: 'background-color 0.2s',
-											}}
-											onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f2f5'}
-											onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-										>
-											{emoji}
-										</span>
-									))}
+									<EmojiPickerReact
+										data={emojiData}
+										onEmojiSelect={handleEmojiSelect}
+										locale="pt"
+										theme="light"
+										previewPosition="none"
+										searchPosition="top"
+										navPosition="top"
+										perLine={8}
+										emojiButtonSize={36}
+										emojiSize={22}
+										maxFrequentRows={1}
+										set="native"
+									/>
 								</div>
 							)}
 							{!isMobile && (
