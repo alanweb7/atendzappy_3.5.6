@@ -577,20 +577,16 @@ function hashGroupColor(str) {
 }
 
 function getGroupSenderName(message) {
-  // 1. Nome do contato associado à mensagem (remetente individual)
-  if (message.contact?.name && message.contact.name.trim()) {
-    return message.contact.name.trim();
-  }
-  // 2. pushName do dataJson (campo salvo pelo Baileys)
+  // 1. pushName do dataJson — nome real do remetente salvo pelo Baileys
   if (message.dataJson) {
     try {
       const parsed = JSON.parse(message.dataJson);
       if (parsed?.pushName) return parsed.pushName;
-      if (parsed?.key?.participant) {
-        const num = parsed.key.participant.split('@')[0];
-        return `+${num}`;
-      }
     } catch {}
+  }
+  // 2. Contato individual — só usar se não for o próprio grupo (isGroup=false)
+  if (message.contact?.name && !message.contact.isGroup) {
+    return message.contact.name.trim();
   }
   // 3. participant JID como último recurso
   if (message.participant) {
