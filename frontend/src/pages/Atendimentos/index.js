@@ -2444,11 +2444,19 @@ useEffect(() => {
 	const ticketMatchesCurrentFilters = useCallback((ticket) => {
 		if (!ticket) return false;
 
+		// Grupos: se o usuário tem allowGroup, os filtros de fila/usuário não se aplicam
+		if (ticket.isGroup) {
+			if (!permissionFlags.allowGroup) return false;
+			const currentTabIndex = tabIndexRef.current;
+			const currentTab = TAB_CONFIG[currentTabIndex];
+			return currentTab?.key === "groups";
+		}
+
 		const canSeeOtherUsersTickets = permissionFlags.hasAllUserChat;
 		const canSeeTicketsWithoutQueue = permissionFlags.hasAllTicket;
 
 		const inferredQueueId = ticket.queueId || ticket.queue?.id;
-		
+
 		// **CORREÇÃO: Quando showAllTickets está ativo, mostrar todos os tickets (com e sem fila)**
 		if (!showAllTickets) {
 			// Só aplica filtros quando "ver todos" NÃO está ativo
@@ -2576,7 +2584,10 @@ useEffect(() => {
 		const userWhatsappId = user?.whatsappId;
 		let filtered = applyClientFilters(ticketList);
 		if (!isAdminOrManager && userWhatsappId) {
-			filtered = filtered.filter(t => (t.whatsappId || t.whatsapp?.id) === userWhatsappId);
+			// Grupos não filtram por whatsappId do usuário — passam direto se allowGroup
+			filtered = filtered.filter(t =>
+				t.isGroup || (t.whatsappId || t.whatsapp?.id) === userWhatsappId
+			);
 		}
 		return filtered;
 	}, [applyClientFilters, user?.userType, user?.whatsappId]);
@@ -5099,14 +5110,6 @@ useEffect(() => {
 													)}
 
 													<div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
-														{!allDeleted && (
-															<Typography style={{ fontSize: "11px", color: "#667781", fontWeight: 500 }}>
-																{firstMessage.fromMe
-																	? (firstMessage.fromAgent ? "Automação" : (firstMessage.user?.name || user.name))
-																	: (selectedTicket?.isGroup ? getGroupSenderName(firstMessage) : selectedTicket?.contact?.name)
-																} •
-															</Typography>
-														)}
 														<Typography className={classes.messageTime}>
 															{formatMessageTime(firstMessage.createdAt)}
 														</Typography>
@@ -5239,14 +5242,6 @@ useEffect(() => {
 												)}
 												
 												<div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
-													{!item.isDeleted && (
-														<Typography style={{ fontSize: "11px", color: "#667781", fontWeight: 500 }}>
-															{item.fromMe
-																? (item.fromAgent ? "Automação" : (item.user?.name || user.name))
-																: (selectedTicket?.isGroup ? getGroupSenderName(item) : selectedTicket?.contact?.name)
-															} •
-														</Typography>
-													)}
 													<Typography className={classes.messageTime}>
 														{formatMessageDateTime(item.createdAt)}
 													</Typography>
