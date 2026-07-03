@@ -560,14 +560,15 @@ const ListTicketsService = async ({
       }
 
   // Aplicar filtros de fila e usuário selecionados (se houver)
-  if (Array.isArray(queueIds) && queueIds.length > 0 && status !== "search") {
+  // Grupos não têm fila nem usuário — ignorar esses filtros para evitar excluí-los
+  if (Array.isArray(queueIds) && queueIds.length > 0 && status !== "search" && status !== "group") {
     whereCondition = {
       ...whereCondition,
       queueId: queueIds
     };
   }
 
-  if (Array.isArray(users) && users.length > 0 && status !== "search") {
+  if (Array.isArray(users) && users.length > 0 && status !== "search" && status !== "group") {
     whereCondition = {
       ...whereCondition,
       userId: users

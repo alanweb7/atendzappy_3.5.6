@@ -2601,8 +2601,12 @@ useEffect(() => {
 			const pendingType = currentTab.key === "automation" ? "automation"
 				: currentTab.key === "pending" ? "assigned"
 				: undefined;
+			// Para grupos não enviar queueIds/users (grupos não têm fila e seriam excluídos)
+			const filterParams = currentTab.key === "groups"
+				? { searchParam: buildFilterParams().searchParam }
+				: buildFilterParams();
 			const params = {
-				...buildFilterParams(),
+				...filterParams,
 				status,
 				pageNumber: page,
 				pageSize: page === 1 ? TICKETS_PAGE_SIZE : TICKETS_MORE_SIZE,
