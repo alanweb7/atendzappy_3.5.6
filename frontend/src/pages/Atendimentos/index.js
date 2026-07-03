@@ -1637,7 +1637,7 @@ const Atendimentos = () => {
 				</IconButton>
 
 			{/* Excluir grupo — apenas admin, apenas grupos */}
-			{selectedTicket?.isGroup && user?.profile === "admin" && (
+			{selectedTicket?.isGroup && user?.userType === "admin" && (
 				<IconButton
 					size="small"
 					onClick={() => handleRemoveGroup(selectedTicket)}
@@ -4327,7 +4327,7 @@ useEffect(() => {
 
 	const handleRemoveGroup = async (ticket) => {
 		if (!ticket || !ticket.isGroup) return;
-		if (user?.profile !== "admin") return;
+		if (user?.userType !== "admin") return;
 
 		const confirmRemover = await showConfirm({
 			type: "error",

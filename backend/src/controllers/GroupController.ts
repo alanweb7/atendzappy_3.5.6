@@ -71,10 +71,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const deleteGroup = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId, profile } = req.user;
+  const { companyId, userType } = req.user;
   const { contactId } = req.params;
 
-  if (profile !== "admin") {
+  if (userType !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
