@@ -1617,7 +1617,7 @@ const Atendimentos = () => {
 						</IconButton>
 						</>
 				)}
-				{selectedTicket.status !== "pending" && (
+				{selectedTicket.status !== "pending" && !selectedTicket.isGroup && (
 					<>
 						<IconButton
 							size="small"
@@ -1643,23 +1643,22 @@ const Atendimentos = () => {
 						>
 							<AddIcon style={{ fontSize: iconSize }} />
 						</IconButton>
-
-						{/* Excluir grupo — apenas admin, apenas grupos */}
-						{selectedTicket?.isGroup && user?.userType === "admin" && (
-							<IconButton
-								size="small"
-								onClick={() => handleRemoveGroup(selectedTicket)}
-								style={{
-									...buttonBaseStyle,
-									backgroundColor: "#f44336",
-									color: "#fff",
-								}}
-								title="Excluir grupo e conversas"
-							>
-								<DeleteIcon style={{ fontSize: iconSize }} />
-							</IconButton>
-						)}
 					</>
+				)}
+				{/* Excluir grupo — apenas admin, apenas grupos */}
+				{selectedTicket?.isGroup && user?.userType === "admin" && (
+					<IconButton
+						size="small"
+						onClick={() => handleRemoveGroup(selectedTicket)}
+						style={{
+							...buttonBaseStyle,
+							backgroundColor: "#f44336",
+							color: "#fff",
+						}}
+						title="Excluir grupo e conversas"
+					>
+						<DeleteIcon style={{ fontSize: iconSize }} />
+					</IconButton>
 				)}
 			</>
 		);
