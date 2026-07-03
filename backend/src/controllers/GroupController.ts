@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
 import Contact from "../models/Contact";
+import Ticket from "../models/Ticket";
+import Message from "../models/Message";
+import TicketTraking from "../models/TicketTraking";
+import TicketTag from "../models/TicketTag";
+import TicketNote from "../models/TicketNote";
 import Whatsapp from "../models/Whatsapp";
+import AppError from "../errors/AppError";
 import { Op } from "sequelize";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -62,4 +68,38 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     console.error("❌ [GroupController] Error fetching groups:", error);
     return res.status(500).json({ error: "Error fetching groups" });
   }
+};
+
+export const deleteGroup = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, profile } = req.user;
+  const { contactId } = req.params;
+
+  if (profile !== "admin") {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
+  const contact = await Contact.findOne({
+    where: { id: contactId, companyId, isGroup: true }
+  });
+
+  if (!contact) {
+    throw new AppError("ERR_NO_GROUP_FOUND", 404);
+  }
+
+  // Buscar todos os tickets deste grupo
+  const tickets = await Ticket.findAll({
+    where: { contactId: contact.id, companyId }
+  });
+
+  for (const ticket of tickets) {
+    await (Message as any).destroy({ where: { ticketId: ticket.id } });
+    await (TicketTraking as any).destroy({ where: { ticketId: ticket.id } });
+    await (TicketTag as any).destroy({ where: { ticketId: ticket.id } });
+    await (TicketNote as any).destroy({ where: { ticketId: ticket.id } });
+    await ticket.destroy();
+  }
+
+  await contact.destroy();
+
+  return res.status(200).json({ message: "Grupo e conversas removidos com sucesso." });
 };
