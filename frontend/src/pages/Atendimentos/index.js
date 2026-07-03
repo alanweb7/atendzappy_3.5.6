@@ -812,6 +812,7 @@ const Atendimentos = () => {
 	const [transferTicketModalOpen, setTransferTicketModalOpen] = useState(false);
 	const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+	const [emojiSkinTone, setEmojiSkinTone] = useState(1);
 	const [showQuickReplies, setShowQuickReplies] = useState(false);
 	const [quickMessages, setQuickMessages] = useState([]);
 	const [quickMessagesOpen, setQuickMessagesOpen] = useState(false);
@@ -5352,14 +5353,40 @@ useEffect(() => {
 									backgroundColor: '#fff',
 								}}>
 									<div style={{
-										padding: '10px 14px 6px',
-										fontSize: 12,
-										fontWeight: 600,
-										color: '#667781',
-										letterSpacing: '0.3px',
+										padding: '10px 14px 8px',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
 										borderBottom: '1px solid #f0f2f5',
 									}}>
-										Escolha a cor de pele padrão
+										<span style={{ fontSize: 12, fontWeight: 600, color: '#667781', letterSpacing: '0.3px' }}>
+											Escolha a cor de pele padrão
+										</span>
+										<div style={{ display: 'flex', gap: 5 }}>
+											{[
+												{ tone: 1, color: '#FFCA28' },
+												{ tone: 2, color: '#FCDDB0' },
+												{ tone: 3, color: '#E0AE84' },
+												{ tone: 4, color: '#C68442' },
+												{ tone: 5, color: '#8D5524' },
+												{ tone: 6, color: '#4A2912' },
+											].map(({ tone, color }) => (
+												<div
+													key={tone}
+													onClick={() => setEmojiSkinTone(tone)}
+													style={{
+														width: 20,
+														height: 20,
+														borderRadius: '50%',
+														backgroundColor: color,
+														cursor: 'pointer',
+														border: emojiSkinTone === tone ? '2px solid #00a884' : '2px solid transparent',
+														boxSizing: 'border-box',
+														transition: 'border 0.15s',
+													}}
+												/>
+											))}
+										</div>
 									</div>
 									<EmojiPickerReact
 										data={emojiData}
@@ -5374,6 +5401,7 @@ useEffect(() => {
 										emojiSize={22}
 										maxFrequentRows={1}
 										set="native"
+										skin={emojiSkinTone}
 									/>
 								</div>
 							)}
