@@ -5349,14 +5349,25 @@ useEffect(() => {
 									boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
 									borderRadius: '12px',
 									overflow: 'hidden',
+									backgroundColor: '#fff',
 								}}>
+									<div style={{
+										padding: '10px 14px 6px',
+										fontSize: 12,
+										fontWeight: 600,
+										color: '#667781',
+										letterSpacing: '0.3px',
+										borderBottom: '1px solid #f0f2f5',
+									}}>
+										Escolha a cor de pele padrão
+									</div>
 									<EmojiPickerReact
 										data={emojiData}
 										onEmojiSelect={handleEmojiSelect}
 										locale="pt"
 										theme="light"
 										previewPosition="none"
-										searchPosition="top"
+										searchPosition="none"
 										navPosition="top"
 										perLine={8}
 										emojiButtonSize={36}
