@@ -561,6 +561,46 @@ const isAdAutomaticMessage = (message, channel) => {
 	return hasAdKeyword || (isVeryShort && hasAdEmoji);
 };
 
+// ── Grupo: identificação de remetentes ────────────────────────────────────────
+
+const GROUP_SENDER_COLORS = [
+  '#e91e63', '#9c27b0', '#673ab7', '#3f51b5',
+  '#2196f3', '#00897b', '#388e3c', '#f57c00',
+  '#e64a19', '#5d4037', '#0288d1', '#7b1fa2',
+];
+
+function hashGroupColor(str) {
+  if (!str) return GROUP_SENDER_COLORS[0];
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return GROUP_SENDER_COLORS[Math.abs(h) % GROUP_SENDER_COLORS.length];
+}
+
+function getGroupSenderName(message) {
+  // 1. Nome do contato associado à mensagem (remetente individual)
+  if (message.contact?.name && message.contact.name.trim()) {
+    return message.contact.name.trim();
+  }
+  // 2. pushName do dataJson (campo salvo pelo Baileys)
+  if (message.dataJson) {
+    try {
+      const parsed = JSON.parse(message.dataJson);
+      if (parsed?.pushName) return parsed.pushName;
+      if (parsed?.key?.participant) {
+        const num = parsed.key.participant.split('@')[0];
+        return `+${num}`;
+      }
+    } catch {}
+  }
+  // 3. participant JID como último recurso
+  if (message.participant) {
+    return `+${message.participant.split('@')[0]}`;
+  }
+  return 'Desconhecido';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 // Função para extrair parâmetros UTM da URL
 const getUTMParameters = () => {
 	const params = new URLSearchParams(window.location.search);
@@ -5012,6 +5052,18 @@ useEffect(() => {
 														</IconButton>
 													)}
 													
+													{/* Nome do remetente em grupos (mídia agrupada) */}
+													{selectedTicket?.isGroup && !firstMessage.fromMe && (
+														<Typography style={{
+															fontSize: 12,
+															fontWeight: 700,
+															color: hashGroupColor(getGroupSenderName(firstMessage)),
+															marginBottom: 3,
+															lineHeight: 1.3,
+														}}>
+															{getGroupSenderName(firstMessage)}
+														</Typography>
+													)}
 													{allDeleted ? (
 														<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
 															<Typography style={{ color: "#d32f2f", fontSize: "14px", fontStyle: "italic" }}>
@@ -5029,7 +5081,7 @@ useEffect(() => {
 														<>
 															{/* Renderiza grid de múltiplos arquivos */}
 															{renderMediaGrid(item.messages)}
-															
+
 															{someDeleted && (
 																<Typography style={{ fontSize: "12px", color: "#d32f2f", fontStyle: "italic", marginTop: "4px" }}>
 																	Algumas mensagens foram apagadas
@@ -5037,23 +5089,26 @@ useEffect(() => {
 															)}
 														</>
 													)}
-													
+
 													{allDeleted && viewingDeletedMessage === firstMessage.id && (
 														<div style={{
-															marginTop: "8px", 
-															padding: "8px", 
-															backgroundColor: "rgba(0,0,0,0.05)", 
+															marginTop: "8px",
+															padding: "8px",
+															backgroundColor: "rgba(0,0,0,0.05)",
 															borderRadius: "4px",
 															borderLeft: "3px solid #d32f2f"
 														}}>
 															{renderMediaGrid(item.messages, true)}
 														</div>
 													)}
-													
+
 													<div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
 														{!allDeleted && (
 															<Typography style={{ fontSize: "11px", color: "#667781", fontWeight: 500 }}>
-																{firstMessage.fromMe ? (firstMessage.fromAgent ? "Automação" : (firstMessage.user?.name || user.name)) : selectedTicket?.contact?.name} •
+																{firstMessage.fromMe
+																	? (firstMessage.fromAgent ? "Automação" : (firstMessage.user?.name || user.name))
+																	: (selectedTicket?.isGroup ? getGroupSenderName(firstMessage) : selectedTicket?.contact?.name)
+																} •
 															</Typography>
 														)}
 														<Typography className={classes.messageTime}>
@@ -5132,6 +5187,18 @@ useEffect(() => {
 													</div>
 												) : (
 													<>
+														{/* Nome do remetente em conversas de grupo (somente mensagens recebidas) */}
+														{selectedTicket?.isGroup && !item.fromMe && (
+															<Typography style={{
+																fontSize: 12,
+																fontWeight: 700,
+																color: hashGroupColor(getGroupSenderName(item)),
+																marginBottom: 3,
+																lineHeight: 1.3,
+															}}>
+																{getGroupSenderName(item)}
+															</Typography>
+														)}
 														{/* Quoted Message */}
 														{item.quotedMsg && (
 															<div style={{
@@ -5143,7 +5210,10 @@ useEffect(() => {
 																cursor: 'pointer'
 															}}>
 																<Typography style={{ fontSize: 12, color: '#00a884', fontWeight: 500, marginBottom: 2 }}>
-																	{item.quotedMsg.fromMe ? (item.quotedMsg.fromAgent ? "Automação" : (item.quotedMsg.user?.name || user.name)) : selectedTicket?.contact?.name}
+																	{item.quotedMsg.fromMe
+																		? (item.quotedMsg.fromAgent ? "Automação" : (item.quotedMsg.user?.name || user.name))
+																		: (selectedTicket?.isGroup ? getGroupSenderName(item.quotedMsg) : selectedTicket?.contact?.name)
+																	}
 																</Typography>
 																<div style={{
 																	fontSize: 13,
@@ -5175,7 +5245,10 @@ useEffect(() => {
 												<div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
 													{!item.isDeleted && (
 														<Typography style={{ fontSize: "11px", color: "#667781", fontWeight: 500 }}>
-															{item.fromMe ? (item.fromAgent ? "Automação" : (item.user?.name || user.name)) : selectedTicket?.contact?.name} •
+															{item.fromMe
+																? (item.fromAgent ? "Automação" : (item.user?.name || user.name))
+																: (selectedTicket?.isGroup ? getGroupSenderName(item) : selectedTicket?.contact?.name)
+															} •
 														</Typography>
 													)}
 													<Typography className={classes.messageTime}>
