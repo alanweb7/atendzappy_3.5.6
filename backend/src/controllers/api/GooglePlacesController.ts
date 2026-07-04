@@ -1,10 +1,19 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import AppError from "../../errors/AppError";
+import Setting from "../../models/Setting";
 
-const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const getApiKey = async (companyId: number): Promise<string> => {
+  const dbSetting = await Setting.findOne({
+    where: { companyId, key: "googlePlacesApiKey" }
+  });
+  return dbSetting?.value || process.env.GOOGLE_PLACES_API_KEY || "";
+};
 
 export const search = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const GOOGLE_API_KEY = await getApiKey(companyId);
+
   if (!GOOGLE_API_KEY) {
     throw new AppError("GOOGLE_PLACES_API_KEY not configured", 500);
   }

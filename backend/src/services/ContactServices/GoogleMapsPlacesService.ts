@@ -5,6 +5,7 @@ import { Job } from "bull";
 import { ScrapeJobData, ScrapeJobResult } from "../../queues/googleMapsScrapeQueue";
 import CreateOrUpdateContactServiceForImport from "./CreateOrUpdateContactServiceForImport";
 import logger from "../../utils/logger";
+import Setting from "../../models/Setting";
 
 const BASE = "https://maps.googleapis.com/maps/api/place";
 
@@ -159,10 +160,20 @@ const buildCsv = (rows: Record<string, unknown>[]): string => {
 const GoogleMapsPlacesService = async (
   job: Job<ScrapeJobData>
 ): Promise<ScrapeJobResult> => {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY || "";
+  const { companyId: jobCompanyId } = job.data;
+
+  // Busca a chave no banco (configuração do admin), com fallback para .env
+  let apiKey = process.env.GOOGLE_PLACES_API_KEY || "";
+  if (jobCompanyId) {
+    const dbSetting = await Setting.findOne({
+      where: { companyId: jobCompanyId, key: "googlePlacesApiKey" }
+    });
+    if (dbSetting?.value) apiKey = dbSetting.value;
+  }
+
   if (!apiKey) {
     throw new Error(
-      "GOOGLE_PLACES_API_KEY não configurada. Adicione a variável no .env e reinicie o servidor."
+      "Chave da API do Google Places não configurada. Acesse Ajustes > Integrações para configurar."
     );
   }
 
