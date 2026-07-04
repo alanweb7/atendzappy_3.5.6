@@ -161,6 +161,14 @@ const GoogleMapsImport = () => {
     const [progress, setProgress] = useState(0);
     const pollRef = useRef(null);
 
+    // Verifica se a chave Google Places está configurada no banco
+    const [googleKeyConfigured, setGoogleKeyConfigured] = useState(null);
+    useEffect(() => {
+        api.get("/settings/googlePlacesApiKey")
+            .then(({ data }) => setGoogleKeyConfigured(!!(data?.value)))
+            .catch(() => setGoogleKeyConfigured(false));
+    }, []);
+
     // Dialog criar lista
     const [listDialog, setListDialog] = useState(false);
     const [listName, setListName] = useState("");
@@ -690,10 +698,16 @@ const GoogleMapsImport = () => {
             </Box>
 
             <Box mt={2}>
-                <Typography variant="caption" color="textSecondary">
-                    💡 Requer <strong>GOOGLE_PLACES_API_KEY</strong> no .env — a API do Google Places
-                    oferece $200/mês de crédito gratuito (≈ 6.000 buscas).
-                </Typography>
+                {googleKeyConfigured === true ? (
+                    <Typography variant="caption" style={{ color: "#00a884" }}>
+                        ✅ <strong>Google Places API</strong> configurada — usando API oficial.
+                    </Typography>
+                ) : googleKeyConfigured === false ? (
+                    <Typography variant="caption" color="textSecondary">
+                        💡 <strong>Google Places API</strong> não configurada — usando Puppeteer (scraping).
+                        Configure a chave em <strong>Ajustes &gt; Integrações</strong>.
+                    </Typography>
+                ) : null}
             </Box>
         </Box>
     );
