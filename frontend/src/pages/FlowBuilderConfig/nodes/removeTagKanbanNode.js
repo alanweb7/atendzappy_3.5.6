@@ -7,8 +7,6 @@ export default memo(({ data, isConnectable, id }) => {
   const storageItems = useNodeStorage();
   const [isHovered, setIsHovered] = useState(false);
 
-  const tagColor = data?.data?.color || data?.color || "#ef4444";
-
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}

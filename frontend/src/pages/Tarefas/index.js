@@ -7,9 +7,7 @@ import {
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import AddIcon from "@material-ui/icons/Add";
-import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
-import FlagIcon from "@material-ui/icons/Flag";
 import AccessTimeIcon from "@material-ui/icons/AccessTime";
 import PersonIcon from "@material-ui/icons/Person";
 import { format, isPast, isToday } from "date-fns";

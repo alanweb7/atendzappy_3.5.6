@@ -7,7 +7,6 @@ import {
   Typography,
   ButtonBase,
   Avatar,
-  Divider,
   TextField,
   InputAdornment,
   Tabs,
@@ -25,29 +24,16 @@ import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
-import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
-import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
 import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import PhotoSizeSelectLargeIcon from "@mui/icons-material/PhotoSizeSelectLarge";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import SettingsPhoneIcon from "@mui/icons-material/SettingsPhone";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import SyncAltIcon from "@mui/icons-material/SyncAlt";
-import DashboardIcon from "@material-ui/icons/Dashboard";
-import BarChartIcon from "@material-ui/icons/BarChart";
-import ChatIcon from "@material-ui/icons/Chat";
-import ContactsIcon from "@material-ui/icons/Contacts";
-import BusinessCenterIcon from "@material-ui/icons/BusinessCenter";
-import PersonAddIcon from "@material-ui/icons/PersonAdd";
-import DeviceHubIcon from "@material-ui/icons/DeviceHub";
-import GroupIcon from "@material-ui/icons/Group";
-import BuildIcon from "@material-ui/icons/Build";
 import ViewColumnIcon from "@material-ui/icons/ViewColumn";
 import SearchIcon from "@material-ui/icons/Search";
 const useStyles = makeStyles((theme) => ({
@@ -472,15 +458,6 @@ const Sistema = () => {
     [campaigns, openAi, kanban, internalChat]
   );
 
-  const canShowRoute = (route) => {
-    if (!route) return true;
-    const normalizedRoute = route.toLowerCase();
-    const requiredFeature = routeFeatureMap[normalizedRoute];
-    if (!requiredFeature) return true;
-    if (planLoading) return true;
-    return Boolean(featureState[requiredFeature]);
-  };
-
   const superAdminCategory = {
     title: "Super Admin",
     description: "Módulos disponíveis apenas para a empresa 1.",
@@ -508,7 +485,7 @@ const Sistema = () => {
 
   const baseCategories = useMemo(
     () => (isSuperAdminCompany ? [...categories, superAdminCategory] : categories),
-    [isSuperAdminCompany]
+    [isSuperAdminCompany, superAdminCategory]
   );
 
   const visibleCategories = useMemo(
@@ -518,11 +495,15 @@ const Sistema = () => {
           ...category,
           items: category.items.filter((item) => {
             const route = (item.route || "").toLowerCase();
-            return canShowRoute(route);
+            if (!route) return true;
+            const requiredFeature = routeFeatureMap[route];
+            if (!requiredFeature) return true;
+            if (planLoading) return true;
+            return Boolean(featureState[requiredFeature]);
           }),
         }))
         .filter((category) => category.items.length > 0),
-    [baseCategories, canShowRoute]
+    [baseCategories, featureState, planLoading]
   );
 
   React.useEffect(() => {

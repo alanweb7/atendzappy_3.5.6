@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useContext } from "react";
 import { toast } from "react-toastify";
 import { useParams, useHistory } from "react-router-dom";
-import { makeStyles, useTheme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import {
   Box,
   Typography,
   Button,
   Card,
   CardContent,
-  Grid,
   Chip,
   IconButton,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -34,13 +32,11 @@ import {
   ArrowBack as ArrowBackIcon,
   Description as DescriptionIcon,
   CloudUpload as CloudUploadIcon,
-  Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   GetApp as DownloadIcon,
   MoreVert as MoreVertIcon,
   Search as SearchIcon,
-  Business as BusinessIcon,
 } from "@material-ui/icons";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -102,7 +98,6 @@ const useStyles = makeStyles((theme) => ({
 
 const EmpresaDocumentos = () => {
   const classes = useStyles();
-  const theme = useTheme();
   const { id } = useParams();
   const history = useHistory();
   const { user } = useContext(AuthContext);

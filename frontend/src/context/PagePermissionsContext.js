@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "../services/api";
 import toastError from "../errors/toastError";
 import { AuthContext } from "./Auth/AuthContext";
@@ -7,7 +7,6 @@ const PagePermissionsContext = createContext();
 
 const PagePermissionsProvider = ({ children }) => {
   const [permissions, setPermissions] = useState({});
-  const [pagePermissionsMode, setPagePermissionsMode] = useState("inherit");
   const [loading, setLoading] = useState(true);
   const [availablePages, setAvailablePages] = useState({});
   const { user } = useContext(AuthContext);
@@ -16,16 +15,16 @@ const PagePermissionsProvider = ({ children }) => {
   useEffect(() => {
     loadUserPermissions();
     loadAvailablePages();
-  }, []);
+  }, [loadUserPermissions, loadAvailablePages]);
 
   // Recarrega permissões quando o usuário mudar (após login)
   useEffect(() => {
     if (user && user.id) {
       loadUserPermissions();
     }
-  }, [user?.id]);
+  }, [user, loadUserPermissions]);
 
-  const loadUserPermissions = async () => {
+  const loadUserPermissions = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await api.get("/user-accessible-pages");
@@ -44,19 +43,19 @@ const PagePermissionsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadAvailablePages = async () => {
+  const loadAvailablePages = useCallback(async () => {
     try {
       const { data } = await api.get("/pages/list");
       setAvailablePages(data.pages || {});
     } catch (err) {
       toastError(err);
     }
-  };
+  }, []);
 
   // Verifica se o usuário tem acesso a uma página específica
-  const canAccessPage = (pagePath) => {
+  const canAccessPage = useCallback((pagePath) => {
     if (loading) return true; // Durante carregamento, permite acesso
     
     // Se não tiver permissões carregadas, permite acesso (fallback)
@@ -66,7 +65,7 @@ const PagePermissionsProvider = ({ children }) => {
     
     // Verifica se tem permissão explícita para a página
     return permissions[pagePath] === true;
-  };
+  }, [loading, permissions]);
 
   // Obtém permissões de um usuário específico (para o modal de edição)
   const getUserPermissions = async (userId) => {
@@ -103,7 +102,7 @@ const PagePermissionsProvider = ({ children }) => {
   };
 
   // Filtra páginas que o usuário pode acessar
-  const getAccessiblePages = (pages) => {
+  const getAccessiblePages = useCallback((pages) => {
     if (loading) return [];
     
     return Object.values(pages).filter(page => {
@@ -116,7 +115,7 @@ const PagePermissionsProvider = ({ children }) => {
       // Verifica nas permissões carregadas
       return permissions[page.path] || false;
     });
-  };
+  }, [loading, permissions]);
 
   // Recarrega as permissões (útil após login/atualização)
   const refreshPermissions = async () => {
@@ -127,7 +126,6 @@ const PagePermissionsProvider = ({ children }) => {
     <PagePermissionsContext.Provider
       value={{
         permissions,
-        pagePermissionsMode,
         loading,
         availablePages,
         canAccessPage,

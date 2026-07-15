@@ -353,6 +353,13 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
     setColorAnchorEl(null);
   };
 
+  const handleDialogClose = (_, reason) => {
+    if (reason === "backdropClick" || reason === "escapeKeyDown") {
+      return;
+    }
+    handleClose();
+  };
+
   const colorPickerOpen = Boolean(colorAnchorEl);
   const colorPickerId = colorPickerOpen ? 'color-picker-popover' : undefined;
 
@@ -490,12 +497,10 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
       <div className={classes.root}>
         <Dialog
           open={open}
-          onClose={handleClose}
+          onClose={handleDialogClose}
           maxWidth="md"
           fullWidth
           scroll="paper"
-          disableBackdropClick
-          disableEscapeKeyDown
           classes={{ paper: classes.dialogPaper }}
           PaperComponent={isMobile ? Paper : DraggablePaper}
           TransitionComponent={Transition}
