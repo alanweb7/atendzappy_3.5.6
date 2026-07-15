@@ -325,8 +325,8 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
   const [colorAnchorEl, setColorAnchorEl] = useState(null);
   const [lanes, setLanes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedLane, setSelectedLane] = useState([]);
-  const [selectedRollbackLane, setSelectedRollbackLane] = useState([]);
+  const [selectedLane, setSelectedLane] = useState("");
+  const [selectedRollbackLane, setSelectedRollbackLane] = useState("");
   const [allTags, setAllTags] = useState([]);
   const [allQueues, setAllQueues] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -403,10 +403,10 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
           return { ...prevState, ...data };
         });
         if (data.nextLaneId) {
-          setSelectedLane(data.nextLaneId);
+          setSelectedLane(data.nextLaneId ? String(data.nextLaneId) : "");
         }
         if (data.rollbackLaneId) {
-          setSelectedRollbackLane(data.rollbackLaneId);
+          setSelectedRollbackLane(data.rollbackLaneId ? String(data.rollbackLaneId) : "");
         }
         if (data.autoActions && Array.isArray(data.autoActions)) {
           setAutoActions(data.autoActions);
@@ -419,6 +419,8 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
 
   const handleClose = () => {
     setTag(initialState);
+    setSelectedLane("");
+    setSelectedRollbackLane("");
     setColorAnchorEl(null);
     setAutoActions([]);
     onClose();
@@ -430,8 +432,8 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
         ...values,
         userId: user?.id,
         kanban: kanban,
-        nextLaneId: selectedLane || null,
-        rollbackLaneId: selectedRollbackLane || null,
+        nextLaneId: selectedLane ? Number(selectedLane) : null,
+        rollbackLaneId: selectedRollbackLane ? Number(selectedRollbackLane) : null,
         autoActions: autoActions,
       };
       
@@ -664,11 +666,14 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
                                 name="nextLaneId"
                                 error={touched.nextLaneId && Boolean(errors.nextLaneId)}
                                 value={selectedLane}
-                                onChange={(e) => setSelectedLane(e.target.value || null)}
+                                onChange={(e) => {
+                                  const value = e.target.value || "";
+                                  setSelectedLane(value);
+                                }}
                               >
-                                <MenuItem value={null}>&nbsp;</MenuItem>
+                                <MenuItem value="">&nbsp;</MenuItem>
                                 {lanes.map((lane) => (
-                                  <MenuItem key={lane.id} value={lane.id}>
+                                  <MenuItem key={lane.id} value={String(lane.id)}>
                                     {lane.name}
                                   </MenuItem>
                                 ))}
@@ -717,11 +722,14 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
                                   touched.rollbackLaneId && Boolean(errors.rollbackLaneId)
                                 }
                                 value={selectedRollbackLane}
-                                onChange={(e) => setSelectedRollbackLane(e.target.value)}
+                                onChange={(e) => {
+                                  const value = e.target.value || "";
+                                  setSelectedRollbackLane(value);
+                                }}
                               >
-                                <MenuItem value={null}>&nbsp;</MenuItem>
+                                <MenuItem value="">&nbsp;</MenuItem>
                                 {lanes.map((lane) => (
-                                  <MenuItem key={lane.id} value={lane.id}>
+                                  <MenuItem key={lane.id} value={String(lane.id)}>
                                     {lane.name}
                                   </MenuItem>
                                 ))}
