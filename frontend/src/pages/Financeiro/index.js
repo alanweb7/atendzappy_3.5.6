@@ -622,7 +622,7 @@ const Invoices = () => {
             </Box>
           )}
 
-          {paymentLinkGenerated ? (
+          {paymentLinkGenerated && (
             <Box style={{ backgroundColor: "#dcfce7", padding: 16, borderRadius: 8, marginBottom: 16, textAlign: "left", border: "1px solid #86efac" }}>
               <Typography variant="body2" style={{ marginBottom: 12, color: "#166534", fontWeight: 600 }}>
                 ✓ Link de Pagamento Gerado
