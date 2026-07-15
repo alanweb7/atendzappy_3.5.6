@@ -27,7 +27,6 @@ import {
   upsertCompanyPaymentSetting
 } from "../../services/companyPaymentSettings";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -100,6 +99,7 @@ const PaymentSettings = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const editing = Boolean(form.id);
@@ -197,22 +197,6 @@ const PaymentSettings = () => {
     }
   };
 
-  const handleTestConnection = async item => {
-    setTesting(item.id);
-    try {
-      const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
-      if (data.success) {
-        toast.success(data.message || "Conexão bem-sucedida!");
-      } else {
-        toast.error(data.message || "Falha na conexão.");
-      }
-    } catch (err) {
-      toastError(err);
-    } finally {
-      setTesting(null);
-    }
-  };
-
   const handleDelete = async item => {
     const confirmed = await showConfirm({
       type: "error",
@@ -235,19 +219,19 @@ const PaymentSettings = () => {
   };
 
   const handleTestConnection = async item => {
-    setTestingConnection(true);
+    setTesting(item.id);
     try {
       const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
       if (data.success) {
-        toast.success(`✓ ${data.message}`);
+        toast.success(data.message || "Conexão bem-sucedida!");
       } else {
-        toast.error(`✗ ${data.message}`);
+        toast.error(data.message || "Falha na conexão.");
       }
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || "Erro ao testar conexão";
-      toast.error(`✗ ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
-      setTestingConnection(false);
+      setTesting(null);
     }
   };
 
@@ -383,11 +367,11 @@ const PaymentSettings = () => {
                       </Button>
                       <Button
                         size="small"
-                        disabled={testingConnection || !item.active}
+                        disabled={testing === item.id || !item.active}
                         onClick={() => handleTestConnection(item)}
                         style={{ color: "#10b981" }}
                       >
-                        {testingConnection ? "Testando..." : "Testar"}
+                        {testing === item.id ? "Testando..." : "Testar"}
                       </Button>
                       <Tooltip title="Remover configuração">
                         <IconButton
