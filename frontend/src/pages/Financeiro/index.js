@@ -207,6 +207,8 @@ const Invoices = () => {
   const [clientPayLink, setClientPayLink] = useState("");
   const [clientPayInvoice, setClientPayInvoice] = useState(null);
   const [generatingClientLink, setGeneratingClientLink] = useState(false);
+  const [paymentLinkGenerated, setPaymentLinkGenerated] = useState("");
+  const [paymentLinkExpires, setPaymentLinkExpires] = useState(null);
   const rowsPerPage = 10;
 
   const isCompanyIdOne = user?.companyId === 1;
@@ -254,6 +256,12 @@ const Invoices = () => {
     setSendingBilling(true);
     try {
       const { data } = await api.post(`/invoices/${selectedInvoiceForBilling.id}/send-billing`);
+      if (data?.linkInvoice) {
+        setPaymentLinkGenerated(data.linkInvoice);
+      }
+      if (data?.expiresAt) {
+        setPaymentLinkExpires(data.expiresAt);
+      }
       const msgs = [];
       if (data.results?.email) msgs.push("E-mail");
       if (data.results?.whatsapp) msgs.push("WhatsApp");
@@ -268,6 +276,20 @@ const Invoices = () => {
     setSendingBilling(false);
     setBillingModalOpen(false);
     setSelectedInvoiceForBilling(null);
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!paymentLinkGenerated) {
+      toast.warn("Nenhum link disponível para copiar.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(paymentLinkGenerated);
+      toast.success("Link copiado!");
+    } catch (err) {
+      toastError(err);
+    }
   };
 
   useEffect(() => {
