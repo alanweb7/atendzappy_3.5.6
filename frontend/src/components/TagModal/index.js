@@ -617,7 +617,6 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
                               onChange={(val) => {
                                 const nextColor = `#${val.hex}`;
                                 setFieldValue("color", nextColor);
-                                setTag(prev => ({ ...prev, color: nextColor }));
                               }}
                             />
                           </div>
