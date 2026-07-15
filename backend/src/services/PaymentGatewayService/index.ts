@@ -2,7 +2,6 @@ import axios from "axios";
 import { v4 as uuid } from "uuid";
 import CompanyPaymentSetting from "../../models/CompanyPaymentSetting";
 import AppError from "../../errors/AppError";
-import FinanceiroFatura from "../../models/FinanceiroFatura";
 import CrmClient from "../../models/CrmClient";
 import syncAsaasCustomer from "./helpers/syncAsaasCustomer";
 
@@ -12,7 +11,17 @@ const ASAAS_BASE_URL = "https://api.asaas.com/v3";
 export type PaymentProvider = "asaas" | "mercadopago";
 
 interface GeneratePaymentLinkParams {
-  invoice: FinanceiroFatura;
+  invoice: {
+    id: number;
+    companyId: number;
+    detail?: string | null;
+    valor?: number | string | null;
+    value?: number | string | null;
+    dataVencimento?: Date | string | null;
+    dueDate?: Date | string | null;
+    clientId?: number | null;
+    linkInvoice?: string | null;
+  };
   provider: PaymentProvider;
 }
 
@@ -37,7 +46,7 @@ export const getCompanyPaymentToken = async (
 };
 
 const generateMercadoPagoLink = async (
-  invoice: FinanceiroFatura,
+  invoice: GeneratePaymentLinkParams["invoice"],
   token: string
 ): Promise<PaymentLinkResult> => {
   mercadopago.configure({
@@ -55,8 +64,8 @@ const generateMercadoPagoLink = async (
     notification_url: notificationUrl,
     items: [
       {
-        title: invoice.descricao || `Fatura #${invoice.id}`,
-        unit_price: Number(invoice.valor),
+        title: invoice.detail || `Fatura #${invoice.id}`,
+        unit_price: Number(invoice.value ?? invoice.valor ?? 0),
         quantity: 1
       }
     ]
@@ -103,19 +112,23 @@ const extractAsaasErrorMessage = (error: any) => {
 };
 
 const generateAsaasPayment = async (
-  invoice: FinanceiroFatura,
+  invoice: GeneratePaymentLinkParams["invoice"],
   token: string,
   customerId: string
 ): Promise<PaymentLinkResult> => {
+  const dueDateSource = invoice.dueDate ?? invoice.dataVencimento;
+  const dueDate =
+    dueDateSource !== undefined && dueDateSource !== null
+      ? new Date(dueDateSource).toISOString().substring(0, 10)
+      : undefined;
+
   const payload = sanitizePayload({
     customer: customerId,
-    name: invoice.descricao || `Fatura #${invoice.id}`,
-    description: invoice.descricao || `Fatura #${invoice.id}`,
-    value: Number(invoice.valor),
+    name: invoice.detail || `Fatura #${invoice.id}`,
+    description: invoice.detail || `Fatura #${invoice.id}`,
+    value: Number(invoice.value ?? invoice.valor ?? 0),
     billingType: "UNDEFINED",
-    dueDate: invoice.dataVencimento
-      ? new Date(invoice.dataVencimento).toISOString().substring(0, 10)
-      : undefined,
+    dueDate,
     notificationEnabled: true,
     externalReference: String(invoice.id)
   });
