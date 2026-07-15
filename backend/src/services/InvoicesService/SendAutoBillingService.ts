@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import Invoices from "../../models/Invoices";
 import Company from "../../models/Company";
 import Setting from "../../models/Setting";
-import { generateSimpleAsaasPaymentLink } from "../PaymentGatewayService";
+import { generatePaymentLink } from "../PaymentGatewayService";
 import { SendMailWithSettings } from "../../helpers/SendMailWithSettings";
 import FindCompaniesWhatsappService from "../CompanyService/FindCompaniesWhatsappService";
 import { getWbot } from "../../libs/wbot";
@@ -114,12 +114,9 @@ export const sendAutoBillingNotifications = async (): Promise<void> => {
       let paymentLink = invoice.linkInvoice || "";
       if (!paymentLink) {
         try {
-          const linkResult = await generateSimpleAsaasPaymentLink({
-            companyId: 1,
-            invoiceId: invoice.id,
-            value: invoice.value,
-            description: invoice.detail || `Fatura #${invoice.id}`,
-            dueDate: dueDateFmt
+          const linkResult = await generatePaymentLink({
+            invoice,
+            provider: "asaas"
           });
           paymentLink = linkResult.paymentLink || "";
           if (paymentLink) {

@@ -17,6 +17,7 @@ import ShowInvoceService from "../services/InvoicesService/ShowInvoiceService";
 import UpdateInvoiceService from "../services/InvoicesService/UpdateInvoiceService";
 import DeleteInvoiceService from "../services/InvoicesService/DeleteInvoiceService";
 import CreateInvoiceService from "../services/InvoicesService/CreateInvoiceService";
+import { generatePaymentLink } from "../services/PaymentGatewayService";
 
 type IndexQuery = {
   searchParam: string;
@@ -274,12 +275,9 @@ export const sendBillingNotification = async (
   let paymentLink = "";
   let paymentLinkError = "";
   try {
-    const paymentResult = await generateSimpleAsaasPaymentLink({
-      companyId: Number(companyId),
-      invoiceId: invoice.id,
-      value: invoice.value,
-      description: invoice.detail || `Fatura #${invoice.id}`,
-      dueDate
+    const paymentResult = await generatePaymentLink({
+      invoice,
+      provider: "asaas"
     });
     paymentLink = paymentResult.paymentLink;
     invoice.linkInvoice = paymentLink;
@@ -296,11 +294,14 @@ export const sendBillingNotification = async (
       .replace(/\{plano\}/g, invoice.detail || "")
       .replace(/\{valor\}/g, value)
       .replace(/\{vencimento\}/g, dueDate)
-      .replace(/\{link\}/g, "");
+      .replace(/\{link\}/g, paymentLink);
   };
 
   const paymentLinkText = paymentLink
     ? `\n\n🔗 *Link de Pagamento:*\n${paymentLink}`
+    : "";
+  const paymentLinkHtml = paymentLink
+    ? `<p><strong>🔗 Link de Pagamento:</strong><br><a href="${paymentLink}" style="color:#1976d2">${paymentLink}</a></p>`
     : "";
 
   // Mensagem padrão caso não tenha template configurado
@@ -410,12 +411,9 @@ export const generateInvoicePaymentLink = async (
   const dueDate = moment(invoice.dueDate).format("DD/MM/YYYY");
 
   // Sempre usa companyId=1 (admin) para buscar o token Asaas
-  const linkResult = await generateSimpleAsaasPaymentLink({
-    companyId: 1,
-    invoiceId: invoice.id,
-    value: invoice.value,
-    description: invoice.detail || `Fatura #${invoice.id}`,
-    dueDate
+  const linkResult = await generatePaymentLink({
+    invoice,
+    provider: "asaas"
   });
 
   const paymentLink = linkResult.paymentLink || "";
@@ -426,8 +424,6 @@ export const generateInvoicePaymentLink = async (
 
   return res.json({
     linkInvoice: paymentLink,
-    endDate: linkResult.endDate || null,
-    active: linkResult.active ?? true,
     regenerated: force
   });
 };
