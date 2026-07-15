@@ -394,6 +394,8 @@ const Kanban = () => {
               <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
                 <IconButton
                   size="small"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                   onClick={() => handleOpenContactModal(ticket.contact.id)}
                   aria-label="ver perfil do contato"
                   style={{ backgroundColor: '#e0e0e0', marginRight: 4 }}
@@ -402,6 +404,8 @@ const Kanban = () => {
                 </IconButton>
                 <IconButton
                   size="small"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                   onClick={() => handleOpenTagsModal(ticket)}
                   aria-label="editar ações do ticket"
                   style={{ backgroundColor: '#e0e0e0', marginRight: 4 }}
@@ -410,6 +414,8 @@ const Kanban = () => {
                 </IconButton>
                 <IconButton
                   size="small"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                   onClick={() => handleOpenWhatsModal(ticket)}
                   aria-label="visualizar conversa"
                   style={{ backgroundColor: '#e0e0e0', marginRight: 4 }}
@@ -418,6 +424,8 @@ const Kanban = () => {
                 </IconButton>
                 <IconButton
                   size="small"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                   onClick={() => handleOpenScheduleModal(ticket.contact.id)}
                   aria-label="agendar mensagem"
                   style={{ backgroundColor: '#e0e0e0', marginRight: 4 }}
