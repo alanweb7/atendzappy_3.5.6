@@ -11,32 +11,18 @@ const PagePermissionsProvider = ({ children }) => {
   const [availablePages, setAvailablePages] = useState({});
   const { user } = useContext(AuthContext);
 
-  // Carrega as permissões do usuário atual
-  useEffect(() => {
-    loadUserPermissions();
-    loadAvailablePages();
-  }, [loadUserPermissions, loadAvailablePages]);
-
-  // Recarrega permissões quando o usuário mudar (após login)
-  useEffect(() => {
-    if (user && user.id) {
-      loadUserPermissions();
-    }
-  }, [user, loadUserPermissions]);
-
   const loadUserPermissions = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await api.get("/user-accessible-pages");
-      
-      // Converte o formato agrupado para um objeto de permissões
+
       const userPermissions = {};
-      Object.values(data.pages || {}).forEach(groupPages => {
-        groupPages.forEach(page => {
+      Object.values(data.pages || {}).forEach((groupPages) => {
+        groupPages.forEach((page) => {
           userPermissions[page.path] = true;
         });
       });
-      
+
       setPermissions(userPermissions);
     } catch (err) {
       toastError(err);
@@ -54,20 +40,30 @@ const PagePermissionsProvider = ({ children }) => {
     }
   }, []);
 
-  // Verifica se o usuário tem acesso a uma página específica
-  const canAccessPage = useCallback((pagePath) => {
-    if (loading) return true; // Durante carregamento, permite acesso
-    
-    // Se não tiver permissões carregadas, permite acesso (fallback)
-    if (!permissions || Object.keys(permissions).length === 0) {
-      return true;
-    }
-    
-    // Verifica se tem permissão explícita para a página
-    return permissions[pagePath] === true;
-  }, [loading, permissions]);
+  useEffect(() => {
+    loadUserPermissions();
+    loadAvailablePages();
+  }, [loadUserPermissions, loadAvailablePages]);
 
-  // Obtém permissões de um usuário específico (para o modal de edição)
+  useEffect(() => {
+    if (user && user.id) {
+      loadUserPermissions();
+    }
+  }, [user, loadUserPermissions]);
+
+  const canAccessPage = useCallback(
+    (pagePath) => {
+      if (loading) return true;
+
+      if (!permissions || Object.keys(permissions).length === 0) {
+        return true;
+      }
+
+      return permissions[pagePath] === true;
+    },
+    [loading, permissions]
+  );
+
   const getUserPermissions = async (userId) => {
     try {
       const { data } = await api.get(`/users/${userId}/page-permissions`);
@@ -78,16 +74,14 @@ const PagePermissionsProvider = ({ children }) => {
     }
   };
 
-  // Define permissões de um usuário específico
   const setUserPermissions = async (userId, permissionsData) => {
     try {
       const { data } = await api.post(`/users/${userId}/page-permissions`, permissionsData);
-      
-      // Se for o usuário atual, recarrega as permissões
+
       if (userId === getCurrentUserId()) {
         await loadUserPermissions();
       }
-      
+
       return data;
     } catch (err) {
       toastError(err);
@@ -95,29 +89,27 @@ const PagePermissionsProvider = ({ children }) => {
     }
   };
 
-  // Obtém o ID do usuário atual
   const getCurrentUserId = () => {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     return userData.id;
   };
 
-  // Filtra páginas que o usuário pode acessar
-  const getAccessiblePages = useCallback((pages) => {
-    if (loading) return [];
-    
-    return Object.values(pages).filter(page => {
-      // Se for admin, tem acesso a tudo
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      if (userData.profile === "admin") {
-        return true;
-      }
-      
-      // Verifica nas permissões carregadas
-      return permissions[page.path] || false;
-    });
-  }, [loading, permissions]);
+  const getAccessiblePages = useCallback(
+    (pages) => {
+      if (loading) return [];
 
-  // Recarrega as permissões (útil após login/atualização)
+      return Object.values(pages).filter((page) => {
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        if (userData.profile === "admin") {
+          return true;
+        }
+
+        return permissions[page.path] || false;
+      });
+    },
+    [loading, permissions]
+  );
+
   const refreshPermissions = async () => {
     await loadUserPermissions();
   };
@@ -133,7 +125,7 @@ const PagePermissionsProvider = ({ children }) => {
         setUserPermissions,
         getAccessiblePages,
         refreshPermissions,
-        loadAvailablePages
+        loadAvailablePages,
       }}
     >
       {children}
