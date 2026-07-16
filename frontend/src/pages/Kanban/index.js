@@ -447,14 +447,20 @@ const Kanban = () => {
               {IconChannel(ticket.channel)}
             </Tooltip> {getDisplayName(ticket.contact)}
           </>,
-          draggable: true,
+          draggable: false,
           href: "/tickets/" + ticket.uuid,
         })),
         style: { backgroundColor: tag.color, color: "white" }
       };
     });
 
-    setFile({ lanes });
+    setFile((prevFile) => {
+      const nextFile = { lanes };
+      if (JSON.stringify(prevFile) === JSON.stringify(nextFile)) {
+        return prevFile;
+      }
+      return nextFile;
+    });
   };
 
   const handleOpenTagsModal = (ticket) => {
@@ -466,6 +472,8 @@ const Kanban = () => {
     setTagsModalOpen(false);
     setSelectedTicketForTags(null);
   };
+
+  const boardData = useMemo(() => file, [file]);
 
   useEffect(() => {
     if (!selectedNegocioId) {
@@ -531,7 +539,7 @@ const Kanban = () => {
       {/* Kanban Board */}
       <div className={classes.kanbanContainer}>
         <Board
-          data={file}
+          data={boardData}
           onCardMoveAcrossLanes={handleCardMove}
           style={{ backgroundColor: 'transparent' }}
         />
