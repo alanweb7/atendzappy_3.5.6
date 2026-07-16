@@ -12,7 +12,6 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { Colorize, Palette, Gradient } from "@material-ui/icons";
-import { ColorBox } from "material-ui-color";
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -40,6 +39,25 @@ import { ThemeProvider, createTheme } from '@material-ui/core/styles';
 import AddCircleOutline from "@material-ui/icons/AddCircleOutline";
 import RemoveCircleOutline from "@material-ui/icons/RemoveCircleOutline";
 import Checkbox from "@material-ui/core/Checkbox";
+
+const PRESET_COLORS = [
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#eab308",
+  "#84cc16",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#0ea5e9",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#a855f7",
+  "#d946ef",
+  "#ec4899",
+  "#64748b",
+];
 
 // Criação de um tema personalizado
 const theme = createTheme({
@@ -617,14 +635,46 @@ const TagModal = ({ open, onClose, tagId, kanban }) => {
                           className={classes.colorPickerPopover}
                         >
                           <div className={classes.colorPickerContainer}>
-                            <ColorBox
-                              disableAlpha={true}
-                              hslGradient={false}
+                            <Typography variant="body2" style={{ marginBottom: 12, fontWeight: 600, color: deepPurple[700] }}>
+                              Selecione uma cor
+                            </Typography>
+                            <Box
+                              display="grid"
+                              gridTemplateColumns="repeat(4, 1fr)"
+                              gridGap={10}
+                            >
+                              {PRESET_COLORS.map((color) => {
+                                const isSelected = values.color?.toLowerCase() === color;
+                                return (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => setFieldValue("color", color)}
+                                    style={{
+                                      width: 38,
+                                      height: 38,
+                                      borderRadius: 999,
+                                      border: isSelected ? `3px solid ${deepPurple[800]}` : "2px solid transparent",
+                                      backgroundColor: color,
+                                      cursor: "pointer",
+                                      boxShadow: isSelected
+                                        ? "0 0 0 2px rgba(255,255,255,0.9), 0 4px 10px rgba(0,0,0,0.15)"
+                                        : "0 2px 6px rgba(0,0,0,0.12)",
+                                      outline: "none",
+                                    }}
+                                    aria-label={`Selecionar cor ${color}`}
+                                  />
+                                );
+                              })}
+                            </Box>
+                            <TextField
+                              fullWidth
+                              margin="dense"
+                              variant="outlined"
+                              label="Ou informe um HEX"
                               value={values.color}
-                              onChange={(val) => {
-                                const nextColor = `#${val.hex}`;
-                                setFieldValue("color", nextColor);
-                              }}
+                              onChange={(e) => setFieldValue("color", e.target.value)}
+                              style={{ marginTop: 16 }}
                             />
                           </div>
                         </Popover>
