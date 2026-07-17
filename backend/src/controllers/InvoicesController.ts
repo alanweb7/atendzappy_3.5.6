@@ -1,6 +1,5 @@
 import * as Yup from "yup";
 import { Request, Response } from "express";
-import axios from "axios";
 import AppError from "../errors/AppError";
 import Invoices from "../models/Invoices";
 import Company from "../models/Company";
@@ -269,40 +268,6 @@ export const sendBillingNotification = async (
     msgTemplate = msgSetting?.value || "";
   } catch (e) {}
 
-  const ASAAS_TOKEN = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmUzMjIwZDkzLWI3NDItNDkyZS1iMzViLTVlYzVjMmRlZjU3ZDo6JGFhY2hfMDBkNTk4NzgtNGZiZi00YTdmLTk2NTktNWUwNDdkYjEwYWI0";
-
-  let paymentLink = "";
-  let paymentLinkError = "";
-  try {
-    const asaasRes = await axios.post(
-      "https://api.asaas.com/v3/paymentLinks",
-      {
-        name: invoice.detail || `Fatura #${invoice.id}`,
-        description: invoice.detail || `Fatura #${invoice.id}`,
-        value: Number(invoice.value),
-        billingType: "UNDEFINED",
-        chargeType: "DETACHED",
-        dueDateLimitDays: 10,
-        externalReference: String(invoice.id),
-        notificationEnabled: false
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          access_token: ASAAS_TOKEN,
-          "User-Agent": "Wesender/1.0.0"
-        },
-        timeout: 15000
-      }
-    );
-    paymentLink = asaasRes.data?.url || `https://www.asaas.com/c/${asaasRes.data?.id}`;
-    invoice.linkInvoice = paymentLink;
-    await invoice.save();
-  } catch (error: any) {
-    paymentLinkError = error?.response?.data?.errors?.[0]?.description || error?.message || String(error);
-    console.error("Error generating payment link:", error?.response?.data || error);
-  }
-
   // Função para substituir variáveis no template
   const replaceVars = (text: string): string => {
     return text
@@ -310,12 +275,11 @@ export const sendBillingNotification = async (
       .replace(/\{plano\}/g, invoice.detail || "")
       .replace(/\{valor\}/g, value)
       .replace(/\{vencimento\}/g, dueDate)
-      .replace(/\{link\}/g, paymentLink || "");
+      .replace(/\{link\}/g, "");
   };
 
   // Mensagem padrão caso não tenha template configurado
-  const paymentLinkText = paymentLink ? `\n\n🔗 *Link de Pagamento:*\n${paymentLink}` : "";
-  const defaultWhatsappBody = `*Aviso de Cobrança - ${appName}*\n\nOlá *${targetCompany.name}*,\n\nIdentificamos que a fatura abaixo encontra-se em aberto:\n\n*Detalhes:* ${invoice.detail}\n*Valor:* ${value}\n*Vencimento:* ${dueDate}\n\nPor favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.${paymentLinkText}\n\nEm caso de dúvidas, entre em contato conosco.\n\nAtenciosamente,\n*${appName}*`;
+  const defaultWhatsappBody = `*Aviso de Cobrança - ${appName}*\n\nOlá *${targetCompany.name}*,\n\nIdentificamos que a fatura abaixo encontra-se em aberto:\n\n*Detalhes:* ${invoice.detail}\n*Valor:* ${value}\n*Vencimento:* ${dueDate}\n\nPor favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.\n\nEm caso de dúvidas, entre em contato conosco.\n\nAtenciosamente,\n*${appName}*`;
 
   const whatsappBody = msgTemplate ? replaceVars(msgTemplate) : defaultWhatsappBody;
 
@@ -324,10 +288,6 @@ export const sendBillingNotification = async (
   // Enviar email de cobrança
   if (targetCompany.email) {
     try {
-      const paymentLinkHtml = paymentLink
-        ? `<p><strong>🔗 Link de Pagamento:</strong><br><a href="${paymentLink}" style="color: #007bff; text-decoration: none;">${paymentLink}</a></p>`
-        : "";
-
       const emailBody = `
         <h2>Aviso de Cobrança - ${appName}</h2>
         <p>Olá <strong>${targetCompany.name}</strong>,</p>
@@ -338,7 +298,6 @@ export const sendBillingNotification = async (
           <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Vencimento</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${dueDate}</td></tr>
         </table>
         <p>Por favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.</p>
-        ${paymentLinkHtml}
         <p>Em caso de dúvidas, entre em contato conosco.</p>
         <br>
         <p>Atenciosamente,<br><strong>${appName}</strong></p>
@@ -377,15 +336,7 @@ export const sendBillingNotification = async (
 
   return res.status(200).json({
     message: "Notificação de cobrança enviada!",
-    results,
-    linkInvoice: paymentLink,
-    debug: {
-      paymentLinkError: paymentLinkError || null,
-      paymentLinkGenerated: !!paymentLink,
-      invoiceId: invoice.id,
-      invoiceValue: invoice.value,
-      codeVersion: "v3-hardcoded-token"
-    }
+    results
   });
 };
 

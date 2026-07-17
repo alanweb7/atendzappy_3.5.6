@@ -19,7 +19,6 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import { makeStyles } from "@material-ui/core/styles";
 import { toast } from "react-toastify";
 import { useSystemAlert } from "../../components/SystemAlert";
-import api from "../../services/api";
 
 import {
   deleteCompanyPaymentSetting,
@@ -99,7 +98,6 @@ const PaymentSettings = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [testingConnection, setTestingConnection] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const editing = Boolean(form.id);
@@ -215,23 +213,6 @@ const PaymentSettings = () => {
       fetchRecords();
     } catch (err) {
       toastError(err);
-    }
-  };
-
-  const handleTestConnection = async item => {
-    setTestingConnection(true);
-    try {
-      const { data } = await api.post(`/payment-settings/test-connection/${item.provider}`);
-      if (data.success) {
-        toast.success(`✓ ${data.message}`);
-      } else {
-        toast.error(`✗ ${data.message}`);
-      }
-    } catch (error) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao testar conexão";
-      toast.error(`✗ ${errorMessage}`);
-    } finally {
-      setTestingConnection(false);
     }
   };
 
@@ -355,14 +336,6 @@ const PaymentSettings = () => {
                         onClick={() => handleEdit(item)}
                       >
                         Editar
-                      </Button>
-                      <Button
-                        size="small"
-                        disabled={testingConnection || !item.active}
-                        onClick={() => handleTestConnection(item)}
-                        style={{ color: "#10b981" }}
-                      >
-                        {testingConnection ? "Testando..." : "Testar"}
                       </Button>
                       <Tooltip title="Remover configuração">
                         <IconButton

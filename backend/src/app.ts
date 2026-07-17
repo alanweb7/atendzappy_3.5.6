@@ -17,7 +17,6 @@ import { ValidationError, DatabaseError, ForeignKeyConstraintError } from "seque
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import * as WhatsappWidgetController from "./controllers/WhatsappWidgetController";
-import { callback as googleBusinessCallback } from "./controllers/GoogleBusinessController";
 import logger from "./utils/logger";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import BullQueue from "./libs/queue"
@@ -45,8 +44,9 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 
 const app = express();
 
-// Necessário para express-rate-limit funcionar corretamente atrás do Nginx
-app.set("trust proxy", 1);
+// Necessário para express-rate-limit funcionar corretamente atrás do nginx
+// (evita ERR_ERL_UNEXPECTED_X_FORWARDED_FOR crash loop)
+app.set('trust proxy', 1);
 
 // Configuração de filas
 app.set("queues", {
@@ -87,9 +87,8 @@ const publicFileAuth = (req: Request, res: Response, next: NextFunction): void =
   const PUBLIC_SUBFOLDERS = ["/profile/", "/slider/", "/user/", "/campaign/"];
   if (PUBLIC_SUBFOLDERS.some(folder => req.path.includes(folder))) return next();
 
-  // Arquivos de mídia (imagem, áudio, vídeo, documentos) são públicos por extensão
-  // URLs são timestamp/UUID-based — não adivinháveis
-  if (/\.(jpg|jpeg|png|gif|webp|svg|ico|mp3|ogg|opus|wav|aac|m4a|mp4|webm|3gp|mov|pdf|txt|csv|doc|docx|xls|xlsx|ppt|pptx)$/i.test(req.path)) return next();
+  // Extensões de imagem na raiz da pasta da empresa também são públicas
+  if (/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(req.path)) return next();
 
   const authHeader = req.headers.authorization;
   const queryToken = req.query.token as string | undefined;
@@ -117,7 +116,6 @@ app.use("/public", publicFileAuth, express.static(uploadConfig.directory, {
   maxAge: '1h',
   etag: true,
   lastModified: true,
-  fallthrough: false,
   setHeaders: (res, filePath) => {
     if (/\.(jpg|jpeg|png|gif|webp)$/.test(filePath)) {
       res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -126,10 +124,6 @@ app.use("/public", publicFileAuth, express.static(uploadConfig.directory, {
     }
   }
 }));
-
-app.use("/public", (err: any, req: Request, res: Response, _next: NextFunction) => {
-  res.status(404).end();
-});
 
 // Middleware para evitar cache nas respostas da API
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -141,9 +135,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Rota OAuth Google Business — pública, deve vir ANTES do roteador principal
-app.get("/google-business-callback", googleBusinessCallback);
-
 // Rotas públicas do widget WhatsApp — devem vir ANTES do roteador principal
 // para nunca passarem por nenhum middleware de autenticação
 app.get("/w/:code/embed.js", WhatsappWidgetController.embedScript);
@@ -153,6 +144,13 @@ app.options("/w/:code/click", (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.status(204).send();
+});
+
+app.get(["/", "/health"], (_req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "wesender-backend"
+  });
 });
 
 // Rotas

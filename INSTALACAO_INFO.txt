@@ -1,6 +1,6 @@
 ========================================
 INFORMAÇÕES DA INSTALAÇÃO - wesender
-Data: Thu Jun 11 14:41:35 -03 2026
+Data: Mon 13 Jul 2026 12:04:08 AM -03
 ========================================
 
 ACESSOS:
@@ -17,7 +17,7 @@ PORTAS:
 CREDENCIAIS:
 - Usuário Deploy: deploy
 - Senha Deploy: Master123
-- Senha Redis: N8SZZymykv5mSe
+- Senha Redis: NkHUCo6AJduywGQ
 
 BANCO DE DADOS POSTGRESQL:
 - Banco: wesender
@@ -36,3 +36,4 @@ COMANDOS ÚTEIS:
 - Ver logs frontend: sudo pm2 logs wesender-frontend
 - Reiniciar: sudo pm2 restart all
 - Ver Docker: sudo docker ps
+

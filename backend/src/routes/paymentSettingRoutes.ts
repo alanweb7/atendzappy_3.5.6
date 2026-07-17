@@ -10,19 +10,6 @@ paymentSettingRoutes.get(
   CompanyPaymentSettingsController.index
 );
 
-// Rotas específicas devem vir ANTES de rotas genéricas
-paymentSettingRoutes.post(
-  "/payment-settings/test-connection/:provider",
-  isAuth,
-  CompanyPaymentSettingsController.testConnection
-);
-
-paymentSettingRoutes.post(
-  "/payment-settings/generate-link/:provider",
-  isAuth,
-  CompanyPaymentSettingsController.generatePaymentLink
-);
-
 paymentSettingRoutes.post(
   "/payment-settings",
   isAuth,
